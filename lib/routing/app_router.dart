@@ -2,6 +2,7 @@ import 'package:go_router/go_router.dart';
 import 'package:shock_app/core/widgets/navigation_shell.dart';
 import 'package:shock_app/features/auth/presentation/pages/login_page.dart';
 import 'package:shock_app/features/splash/presentation/pages/splash_page.dart';
+import 'package:shock_app/features/onboarding/presentation/pages/onboarding_page.dart';
 
 /// Application router configuration using GoRouter
 final appRouter = GoRouter(
@@ -11,6 +12,11 @@ final appRouter = GoRouter(
       path: '/',
       name: 'splash',
       builder: (context, state) => const SplashPage(),
+    ),
+    GoRoute(
+      path: '/onboarding',
+      name: 'onboarding',
+      builder: (context, state) => const OnboardingPage(),
     ),
     GoRoute(
       path: '/login',

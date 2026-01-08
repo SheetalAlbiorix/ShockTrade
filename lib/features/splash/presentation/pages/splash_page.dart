@@ -17,7 +17,7 @@ class _SplashPageState extends State<SplashPage> {
     // Navigate to home after 3 seconds
     Timer(const Duration(seconds: 3), () {
       if (mounted) {
-        context.go('/home');
+        context.go('/onboarding');
       }
     });
   }
