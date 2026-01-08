@@ -3,6 +3,7 @@ import 'package:shock_app/core/widgets/navigation_shell.dart';
 import 'package:shock_app/features/auth/presentation/pages/login_page.dart';
 import 'package:shock_app/features/splash/presentation/pages/splash_page.dart';
 import 'package:shock_app/features/onboarding/presentation/pages/onboarding_page.dart';
+import 'package:shock_app/features/auth/presentation/pages/register_page.dart';
 
 /// Application router configuration using GoRouter
 final appRouter = GoRouter(
@@ -22,6 +23,11 @@ final appRouter = GoRouter(
       path: '/login',
       name: 'login',
       builder: (context, state) => const LoginPage(),
+    ),
+    GoRoute(
+      path: '/register',
+      name: 'register',
+      builder: (context, state) => const RegisterPage(),
     ),
     GoRoute(
       path: '/home',

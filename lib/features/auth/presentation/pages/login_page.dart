@@ -116,7 +116,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                   ),
                   TextButton(
                     onPressed: () {
-                      // context.push('/register'); // Placeholder
+                      context.push('/register');
                     },
                     child: const Text(
                       'Register',
