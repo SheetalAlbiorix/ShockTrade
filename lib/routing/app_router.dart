@@ -3,6 +3,7 @@ import 'package:shock_app/core/widgets/navigation_shell.dart';
 import 'package:shock_app/features/auth/presentation/pages/login_page.dart';
 import 'package:shock_app/features/auth/presentation/pages/splash_page.dart';
 import 'package:shock_app/features/stock_detail/presentation/stock_detail_screen.dart';
+import 'package:shock_app/features/ai_chat/presentation/pages/ai_chat_screen.dart';
 
 /// Application router configuration using GoRouter
 final appRouter = GoRouter(
@@ -33,8 +34,15 @@ final appRouter = GoRouter(
         return StockDetailScreen(symbol: symbol, name: name);
       },
     ),
+    GoRoute(
+      path: '/ai-chat',
+      name: 'ai-chat',
+      builder: (context, state) => const AIChatScreen(),
+    ),
 
     // Add more routes as features are developed:
     // GoRoute(path: '/stocks/:symbol', ...),
+    // GoRoute(path: '/portfolio', ...),
+    // GoRoute(path: '/alerts', ...),
   ],
 );

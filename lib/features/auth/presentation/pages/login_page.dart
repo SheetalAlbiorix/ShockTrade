@@ -26,12 +26,8 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   }
 
   void _handleLogin() {
-    if (_formKey.currentState?.validate() ?? false) {
-      ref.read(authControllerProvider.notifier).login(
-            email: _emailController.text.trim(),
-            password: _passwordController.text,
-          );
-    }
+    // Bypass authentication for now - direct login
+    context.go('/home');
   }
 
   @override
