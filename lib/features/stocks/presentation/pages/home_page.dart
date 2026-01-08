@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:shock_app/core/config/app_strings.dart';
 import 'package:shock_app/core/config/theme_provider.dart';
 
@@ -45,6 +46,19 @@ class HomePage extends ConsumerWidget {
               size: 100,
               color: Colors.green,
             ),
+            const SizedBox(height: 24),
+
+            // Navigate to Stock Detail Screen
+            ElevatedButton.icon(
+              onPressed: () => context.go('/stock-detail'),
+              icon: const Icon(Icons.show_chart),
+              label: const Text('View AAPL Stock Detail'),
+              style: ElevatedButton.styleFrom(
+                padding:
+                    const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+              ),
+            ),
+
             const SizedBox(height: 24),
             Text(
               '${AppStrings.welcomeToShock}!',

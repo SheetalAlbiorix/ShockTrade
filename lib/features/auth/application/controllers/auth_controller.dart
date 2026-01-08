@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shock_app/features/auth/application/state/auth_state.dart';
+import 'package:shock_app/features/auth/domain/entities/user.dart';
 import 'package:shock_app/features/auth/domain/usecases/login_usecase.dart';
 
 /// Controller for managing authentication state
@@ -10,7 +11,7 @@ class AuthController extends StateNotifier<AuthState> {
     required this.loginUseCase,
   }) : super(const AuthState.initial());
 
-  /// Login with email and password
+  /// Login with email and password (using static credentials for testing)
   Future<void> login({
     required String email,
     required String password,
@@ -18,12 +19,24 @@ class AuthController extends StateNotifier<AuthState> {
     state = const AuthState.loading();
 
     try {
-      final user = await loginUseCase(
-        email: email,
-        password: password,
-      );
+      // Static credentials for testing (bypass API)
+      if (email == 'test@test.com' && password == 'test123') {
+        // Simulate network delay
+        await Future.delayed(const Duration(milliseconds: 500));
 
-      state = AuthState.authenticated(user: user);
+        // Create a mock user
+        final user = User(
+          id: '1',
+          email: email,
+          name: 'Test User',
+        );
+
+        state = AuthState.authenticated(user: user);
+      } else {
+        state = const AuthState.error(
+          message: 'Invalid credentials. Use test@test.com / test123',
+        );
+      }
     } catch (e) {
       state = AuthState.error(message: e.toString());
     }
