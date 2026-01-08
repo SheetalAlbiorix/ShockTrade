@@ -28,6 +28,11 @@ class AppColors {
   static const Color darkTextSecondary = Color(0xFFB0B8C8);
   static const Color darkDivider = Color(0xFF2D3348);
 
+  // Navigation Bar Colors
+  static const Color navBackground = Color(0xFF0B0F14);
+  static const Color navActiveColor = Color(0xFF00BCD4);
+  static const Color navInactiveColor = Color(0xFF6B7280);
+
   // Chart Colors
   static const Color chartGreen = Color(0xFF26A69A);
   static const Color chartRed = Color(0xFFEF5350);

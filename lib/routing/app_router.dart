@@ -1,11 +1,11 @@
 import 'package:go_router/go_router.dart';
+import 'package:shock_app/core/widgets/navigation_shell.dart';
 import 'package:shock_app/features/auth/presentation/pages/login_page.dart';
 import 'package:shock_app/features/auth/presentation/pages/splash_page.dart';
-import 'package:shock_app/features/stocks/presentation/pages/home_page.dart';
 
 /// Application router configuration using GoRouter
 final appRouter = GoRouter(
-  initialLocation: '/',
+  initialLocation: '/home', // Changed from '/' to bypass login for testing
   routes: [
     GoRoute(
       path: '/',
@@ -20,13 +20,10 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/home',
       name: 'home',
-      builder: (context, state) => const HomePage(),
+      builder: (context, state) => const NavigationShell(),
     ),
 
     // Add more routes as features are developed:
     // GoRoute(path: '/stocks/:symbol', ...),
-    // GoRoute(path: '/portfolio', ...),
-    // GoRoute(path: '/alerts', ...),
-    // GoRoute(path: '/ai-chat', ...),
   ],
 );
