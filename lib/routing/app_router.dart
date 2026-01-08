@@ -4,6 +4,7 @@ import 'package:shock_app/features/auth/presentation/pages/login_page.dart';
 import 'package:shock_app/features/splash/presentation/pages/splash_page.dart';
 import 'package:shock_app/features/onboarding/presentation/pages/onboarding_page.dart';
 import 'package:shock_app/features/auth/presentation/pages/register_page.dart';
+import 'package:shock_app/features/auth/presentation/pages/forgot_password_page.dart';
 
 /// Application router configuration using GoRouter
 final appRouter = GoRouter(
@@ -28,6 +29,11 @@ final appRouter = GoRouter(
       path: '/register',
       name: 'register',
       builder: (context, state) => const RegisterPage(),
+    ),
+    GoRoute(
+      path: '/forgot-password',
+      name: 'forgot-password',
+      builder: (context, state) => const ForgotPasswordPage(),
     ),
     GoRoute(
       path: '/home',
