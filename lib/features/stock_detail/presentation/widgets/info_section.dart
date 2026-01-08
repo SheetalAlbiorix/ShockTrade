@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shock_app/core/config/app_colors.dart';
 
 /// Generic info section with title and key-value grid
 class InfoSection extends StatelessWidget {
@@ -21,7 +22,7 @@ class InfoSection extends StatelessWidget {
           Text(
             title,
             style: const TextStyle(
-              color: Color(0xFFFFFFFF),
+              color: AppColors.darkTextPrimary,
               fontSize: 20,
               fontWeight: FontWeight.bold,
             ),
@@ -30,7 +31,7 @@ class InfoSection extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: const Color(0xFF15151A),
+              color: AppColors.darkCardBackground,
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
@@ -59,7 +60,7 @@ class InfoSection extends StatelessWidget {
                     Text(
                       item.label,
                       style: const TextStyle(
-                        color: Color(0xFF8E8E93),
+                        color: AppColors.darkTextSecondary,
                         fontSize: 13,
                       ),
                     ),
@@ -67,7 +68,7 @@ class InfoSection extends StatelessWidget {
                     Text(
                       item.value,
                       style: const TextStyle(
-                        color: Color(0xFFFFFFFF),
+                        color: AppColors.darkTextPrimary,
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
                       ),

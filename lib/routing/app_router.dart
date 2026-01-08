@@ -26,7 +26,12 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/stock-detail',
       name: 'stock-detail',
-      builder: (context, state) => const StockDetailScreen(),
+      builder: (context, state) {
+        final symbol = state.uri.queryParameters['symbol'] ?? 'AAPL';
+        final name = state.uri.queryParameters['name'] ?? 'Apple Inc.';
+        // Use symbol as the key for the provider
+        return StockDetailScreen(symbol: symbol, name: name);
+      },
     ),
 
     // Add more routes as features are developed:

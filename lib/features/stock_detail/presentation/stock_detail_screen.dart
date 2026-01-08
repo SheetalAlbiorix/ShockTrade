@@ -1,136 +1,348 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:shock_app/core/config/app_colors.dart';
 import 'package:shock_app/features/stock_detail/application/stock_detail_controller.dart';
-import 'package:shock_app/features/stock_detail/presentation/widgets/action_buttons.dart';
-import 'package:shock_app/features/stock_detail/presentation/widgets/info_section.dart';
-import 'package:shock_app/features/stock_detail/presentation/widgets/price_chart_card.dart';
-import 'package:shock_app/features/stock_detail/presentation/widgets/price_header.dart';
-import 'package:shock_app/features/stock_detail/presentation/widgets/stats_cards.dart';
+import 'package:shock_app/features/stock_detail/presentation/widgets/candlestick_chart.dart';
+import 'package:shock_app/features/stock_detail/presentation/widgets/glass_card.dart';
+import 'package:shock_app/features/stock_detail/presentation/widgets/market_overview_grid.dart';
+import 'package:shock_app/features/stock_detail/presentation/widgets/news_card.dart';
+import 'package:shock_app/features/stock_detail/presentation/widgets/time_filter_tabs.dart';
+import 'package:shock_app/features/stock_detail/presentation/widgets/week_range_indicator.dart';
 
-/// Stock detail screen for AAPL with dark iOS-style design
+/// Stock detail screen with modern HTML-inspired design
 class StockDetailScreen extends ConsumerWidget {
-  const StockDetailScreen({super.key});
+  final String symbol;
+  final String name;
+
+  const StockDetailScreen({
+    super.key,
+    required this.symbol,
+    required this.name,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final state = ref.watch(stockDetailControllerProvider);
-    final controller = ref.read(stockDetailControllerProvider.notifier);
+    final state = ref.watch(stockDetailControllerProvider(symbol));
+    final controller = ref.read(stockDetailControllerProvider(symbol).notifier);
+
+    final isPositive = state.priceChange >= 0;
 
     return Scaffold(
-      backgroundColor: Colors.black,
-      appBar: AppBar(
-        backgroundColor: Colors.black,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-        title: Text(
-          state.symbol,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        centerTitle: true,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications_outlined, color: Colors.white),
-            onPressed: () {},
-          ),
-          IconButton(
-            icon: Icon(
-              state.isInWatchlist ? Icons.star : Icons.star_border,
-              color:
-                  state.isInWatchlist ? const Color(0xFF00E0FF) : Colors.white,
+      backgroundColor: AppColors.darkBackground,
+      body: CustomScrollView(
+        slivers: [
+          // Header
+          SliverAppBar(
+            pinned: true,
+            backgroundColor: AppColors.darkBackground.withOpacity(0.95),
+            elevation: 0,
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back,
+                  color: AppColors.darkTextPrimary),
+              onPressed: () => context.go('/home'),
             ),
-            onPressed: controller.toggleWatchlist,
+            title: Column(
+              children: [
+                Text(
+                  state.symbol,
+                  style: const TextStyle(
+                    color: AppColors.darkTextPrimary,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: AppColors.glassBackground,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: const Text(
+                    'NSE',
+                    style: TextStyle(
+                      color: AppColors.darkTextSecondary,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            centerTitle: true,
+            actions: [
+              IconButton(
+                icon:
+                    const Icon(Icons.search, color: AppColors.darkTextPrimary),
+                onPressed: () {},
+              ),
+              IconButton(
+                icon: Icon(
+                  state.isInWatchlist ? Icons.star : Icons.star_border,
+                  color: state.isInWatchlist
+                      ? AppColors.primaryBlue
+                      : AppColors.darkTextPrimary,
+                ),
+                onPressed: controller.toggleWatchlist,
+              ),
+            ],
+          ),
+
+          // Content
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 24, 16, 24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Price Section
+                  const Text(
+                    'CURRENT PRICE',
+                    style: TextStyle(
+                      color: AppColors.darkTextSecondary,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w500,
+                      letterSpacing: 1.2,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.baseline,
+                    textBaseline: TextBaseline.alphabetic,
+                    children: [
+                      Text(
+                        '₹${state.price.toStringAsFixed(2)}',
+                        style: const TextStyle(
+                          color: AppColors.darkTextPrimary,
+                          fontSize: 36,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: -0.5,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: isPositive
+                              ? AppColors.bullishGreen.withOpacity(0.1)
+                              : AppColors.bearishRed.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              isPositive
+                                  ? Icons.trending_up
+                                  : Icons.trending_down,
+                              color: isPositive
+                                  ? AppColors.bullishGreen
+                                  : AppColors.bearishRed,
+                              size: 16,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              '${isPositive ? '+' : ''}${state.priceChange.toStringAsFixed(2)} (${state.percentChange.toStringAsFixed(2)}%)',
+                              style: TextStyle(
+                                color: isPositive
+                                    ? AppColors.bullishGreen
+                                    : AppColors.bearishRed,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  const Text(
+                    'Last updated: 15:30:00 IST',
+                    style: TextStyle(
+                      color: AppColors.darkTextSecondary,
+                      fontSize: 12,
+                    ),
+                  ),
+
+                  const SizedBox(height: 32),
+
+                  // Time Filter Tabs
+                  TimeFilterTabs(
+                    selectedRange: state.range,
+                    onRangeChanged: controller.changeRange,
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // Candlestick Chart
+                  CandlestickChart(chartPoints: state.chartPoints),
+
+                  // X-axis labels
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('09:15',
+                            style: TextStyle(
+                                color: AppColors.darkTextSecondary,
+                                fontSize: 10)),
+                        Text('11:00',
+                            style: TextStyle(
+                                color: AppColors.darkTextSecondary,
+                                fontSize: 10)),
+                        Text('13:00',
+                            style: TextStyle(
+                                color: AppColors.darkTextSecondary,
+                                fontSize: 10)),
+                        Text('15:30',
+                            style: TextStyle(
+                                color: AppColors.darkTextSecondary,
+                                fontSize: 10)),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  // Market Overview
+                  const Text(
+                    'Market Overview',
+                    style: TextStyle(
+                      color: AppColors.darkTextPrimary,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+
+                  MarketOverviewGrid(
+                    open: state.tradingInfo.open,
+                    high: state.tradingInfo.high,
+                    low: state.tradingInfo.low,
+                    prevClose: state.tradingInfo.prevClose,
+                    volume: '12.45L',
+                    marketCap: state.fundamentals.marketCap,
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  // 52 Week Range
+                  WeekRangeIndicator(
+                    low: 2000.00,
+                    high: 2800.00,
+                    current: state.price,
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  // Fundamentals
+                  const Text(
+                    'Fundamentals',
+                    style: TextStyle(
+                      color: AppColors.darkTextPrimary,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  GlassCard(
+                    padding: const EdgeInsets.all(16),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: [
+                        _buildFundamentalItem(
+                            'P/E RATIO', state.fundamentals.peRatio),
+                        Container(
+                            width: 1, height: 40, color: AppColors.glassBorder),
+                        _buildFundamentalItem('P/B RATIO', '2.1'),
+                        Container(
+                            width: 1, height: 40, color: AppColors.glassBorder),
+                        _buildFundamentalItem(
+                          'DIV YIELD',
+                          state.fundamentals.dividendYield,
+                          valueColor: AppColors.bullishGreen,
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  // News Section
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Latest News',
+                        style: TextStyle(
+                          color: AppColors.darkTextPrimary,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: () {},
+                        child: const Text(
+                          'View All',
+                          style: TextStyle(
+                            color: AppColors.primaryBlue,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  const NewsCard(
+                    title:
+                        'Reliance Industries to acquire major stake in solar energy startup, boosting green portfolio.',
+                    source: 'Mint',
+                    timeAgo: '1 hour ago',
+                  ),
+                  const NewsCard(
+                    title:
+                        'Sensex, Nifty open higher led by Reliance and IT stocks; global cues positive.',
+                    source: 'Economic Times',
+                    timeAgo: '3 hours ago',
+                  ),
+                ],
+              ),
+            ),
           ),
         ],
       ),
-      body: SafeArea(
-        child: ListView(
-          children: [
-            // Price header
-            PriceHeader(
-              price: state.price,
-              priceChange: state.priceChange,
-              percentChange: state.percentChange,
-            ),
+    );
+  }
 
-            // Action buttons
-            ActionButtons(
-              isInWatchlist: state.isInWatchlist,
-              hasAlert: state.hasAlert,
-              onWatchlistTap: controller.toggleWatchlist,
-              onAlertTap: controller.toggleAlert,
-            ),
-
-            // Stats cards
-            const StatsCards(),
-
-            const SizedBox(height: 8),
-
-            // Price chart
-            PriceChartCard(
-              chartPoints: state.chartPoints,
-              selectedRange: state.range,
-              onRangeChanged: controller.changeRange,
-            ),
-
-            const SizedBox(height: 16),
-
-            // Fundamentals section
-            InfoSection(
-              title: 'Fundamentals',
-              items: [
-                InfoItem(
-                    label: 'Market Cap', value: state.fundamentals.marketCap),
-                InfoItem(label: 'P/E Ratio', value: state.fundamentals.peRatio),
-                InfoItem(label: 'EPS (TTM)', value: state.fundamentals.eps),
-                InfoItem(
-                    label: 'Dividend Yield',
-                    value: state.fundamentals.dividendYield),
-                InfoItem(label: 'Beta', value: state.fundamentals.beta),
-                InfoItem(
-                    label: 'Revenue (TTM)', value: state.fundamentals.revenue),
-              ],
-            ),
-
-            const SizedBox(height: 16),
-
-            // Trading Information section
-            InfoSection(
-              title: 'Trading Information',
-              items: [
-                InfoItem(label: 'Open', value: state.tradingInfo.open),
-                InfoItem(label: 'High', value: state.tradingInfo.high),
-                InfoItem(label: 'Low', value: state.tradingInfo.low),
-                InfoItem(
-                    label: 'Prev. Close', value: state.tradingInfo.prevClose),
-                InfoItem(label: 'Bid', value: state.tradingInfo.bid),
-                InfoItem(label: 'Ask', value: state.tradingInfo.ask),
-              ],
-            ),
-
-            const SizedBox(height: 24),
-
-            // Footer
-            const Padding(
-              padding: EdgeInsets.only(bottom: 24),
-              child: Text(
-                'Made with Visily',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: Color(0xFF8E8E93),
-                  fontSize: 12,
-                ),
-              ),
-            ),
-          ],
+  Widget _buildFundamentalItem(String label, String value,
+      {Color? valueColor}) {
+    return Column(
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            color: AppColors.darkTextSecondary,
+            fontSize: 10,
+            fontWeight: FontWeight.w500,
+            letterSpacing: 1.2,
+          ),
         ),
-      ),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          style: TextStyle(
+            color: valueColor ?? AppColors.darkTextPrimary,
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ],
     );
   }
 }

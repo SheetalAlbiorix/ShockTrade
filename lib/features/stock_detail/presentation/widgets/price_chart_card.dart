@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shock_app/core/config/app_colors.dart';
 import 'package:shock_app/features/stock_detail/domain/models.dart';
 
 /// Price chart card with range selector
@@ -21,7 +22,7 @@ class PriceChartCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.darkCardBackground,
           borderRadius: BorderRadius.circular(16),
         ),
         child: Column(
@@ -67,13 +68,13 @@ class _RangeSelector extends StatelessWidget {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
-              color: isSelected ? const Color(0xFF00E0FF) : Colors.transparent,
+              color: isSelected ? AppColors.navActiveColor : Colors.transparent,
               borderRadius: BorderRadius.circular(12),
             ),
             child: Text(
               range.label,
               style: TextStyle(
-                color: isSelected ? Colors.white : const Color(0xFF8E8E93),
+                color: isSelected ? Colors.white : AppColors.darkTextSecondary,
                 fontSize: 13,
                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
               ),

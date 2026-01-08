@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shock_app/core/config/app_colors.dart';
 
 /// Action buttons row for watchlist and alerts
 class ActionButtons extends StatelessWidget {
@@ -25,9 +26,9 @@ class ActionButtons extends StatelessWidget {
             child: OutlinedButton(
               onPressed: onWatchlistTap,
               style: OutlinedButton.styleFrom(
-                foregroundColor: const Color(0xFF00E0FF),
+                foregroundColor: AppColors.navActiveColor,
                 side: const BorderSide(
-                  color: Color(0xFF00E0FF),
+                  color: AppColors.navActiveColor,
                   width: 1.5,
                 ),
                 shape: RoundedRectangleBorder(
@@ -49,7 +50,7 @@ class ActionButtons extends StatelessWidget {
             child: ElevatedButton(
               onPressed: onAlertTap,
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF00E0FF),
+                backgroundColor: AppColors.navActiveColor,
                 foregroundColor: Colors.white,
                 elevation: 0,
                 shape: RoundedRectangleBorder(

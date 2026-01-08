@@ -4,11 +4,28 @@ import 'package:shock_app/features/stock_detail/domain/models.dart';
 
 /// Controller for stock detail screen
 class StockDetailController extends StateNotifier<StockDetailState> {
-  StockDetailController() : super(StockDetailState.initial()) {
-    _loadInitialData();
+  StockDetailController(String symbol, String name)
+      : super(StockDetailState.initial()) {
+    _loadStockData(symbol, name);
   }
 
-  void _loadInitialData() {
+  void _loadStockData(String symbol, String name) {
+    // Generate mock data based on the symbol
+    final random = Random(symbol.hashCode);
+    final basePrice =
+        100 + random.nextDouble() * 500; // Random price between 100-600
+    final priceChange =
+        (random.nextDouble() - 0.5) * 10; // Random change between -5 to +5
+    final percentChange = (priceChange / basePrice) * 100;
+
+    state = state.copyWith(
+      symbol: symbol,
+      price: basePrice,
+      priceChange: priceChange,
+      percentChange: percentChange,
+    );
+
+    // Generate initial chart data
     final chartPoints = _generateMockChartData(StockRange.oneDay);
     state = state.copyWith(chartPoints: chartPoints);
   }
@@ -34,7 +51,7 @@ class StockDetailController extends StateNotifier<StockDetailState> {
 
   /// Generate mock chart data based on range
   List<ChartPoint> _generateMockChartData(StockRange range) {
-    final random = Random(42); // Fixed seed for consistent data
+    final random = Random(state.symbol.hashCode + range.index);
     final now = DateTime.now();
     final basePrice = state.price;
 
@@ -92,8 +109,9 @@ class StockDetailController extends StateNotifier<StockDetailState> {
   }
 }
 
-/// Provider for stock detail controller
-final stockDetailControllerProvider =
-    StateNotifierProvider<StockDetailController, StockDetailState>((ref) {
-  return StockDetailController();
+/// Provider for stock detail controller (family provider for different symbols)
+final stockDetailControllerProvider = StateNotifierProvider.family<
+    StockDetailController, StockDetailState, String>((ref, symbol) {
+  // Extract name from symbol if needed - for now using symbol as placeholder
+  return StockDetailController(symbol, symbol);
 });

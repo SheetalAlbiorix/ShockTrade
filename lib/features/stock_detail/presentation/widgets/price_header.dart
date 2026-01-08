@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shock_app/core/config/app_colors.dart';
 
 /// Price header widget showing current price and daily change
 class PriceHeader extends StatelessWidget {
@@ -17,19 +18,19 @@ class PriceHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final isNegative = priceChange < 0;
     final changeColor =
-        isNegative ? const Color(0xFFFF4D4F) : const Color(0xFF00E0FF);
+        isNegative ? AppColors.bearishRed : AppColors.bullishGreen;
 
     return Container(
       width: double.infinity,
-      color: Colors.black,
+      color: AppColors.darkBackground,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            '\$${price.toStringAsFixed(2)}',
+            '₹${price.toStringAsFixed(2)}',
             style: const TextStyle(
-              color: Color(0xFFFFFFFF),
+              color: AppColors.darkTextPrimary,
               fontSize: 48,
               fontWeight: FontWeight.bold,
               letterSpacing: -1,

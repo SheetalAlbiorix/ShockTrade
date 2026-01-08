@@ -92,18 +92,6 @@ class HomePage extends ConsumerWidget {
             ),
             const SizedBox(height: 24),
 
-            // Navigate to Stock Detail Screen
-            ElevatedButton.icon(
-              onPressed: () => context.go('/stock-detail'),
-              icon: const Icon(Icons.show_chart),
-              label: const Text('View AAPL Stock Detail'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.navActiveColor,
-                padding:
-                    const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
-              ),
-            ),
-
             const SizedBox(height: 24),
 
             // Top Gainers Section
@@ -263,85 +251,88 @@ class HomePage extends ConsumerWidget {
     required String change,
     required bool isPositive,
   }) {
-    return Container(
-      width: 140,
-      margin: const EdgeInsets.only(right: 12),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: AppColors.darkCardBackground,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: isPositive
-              ? AppColors.bullishGreen.withOpacity(0.3)
-              : AppColors.bearishRed.withOpacity(0.3),
-          width: 1,
+    return GestureDetector(
+      onTap: () => context.go('/stock-detail?symbol=$symbol&name=$name'),
+      child: Container(
+        width: 140,
+        margin: const EdgeInsets.only(right: 12),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: AppColors.darkCardBackground,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isPositive
+                ? AppColors.bullishGreen.withOpacity(0.3)
+                : AppColors.bearishRed.withOpacity(0.3),
+            width: 1,
+          ),
         ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                symbol,
-                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      color: AppColors.darkTextPrimary,
-                      fontWeight: FontWeight.bold,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  symbol,
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        color: AppColors.darkTextPrimary,
+                        fontWeight: FontWeight.bold,
+                      ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  name,
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: AppColors.darkTextSecondary,
+                      ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  price,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: AppColors.darkTextPrimary,
+                        fontWeight: FontWeight.w500,
+                      ),
+                ),
+                const SizedBox(height: 2),
+                Row(
+                  children: [
+                    Icon(
+                      isPositive ? Icons.arrow_upward : Icons.arrow_downward,
+                      color: isPositive
+                          ? AppColors.bullishGreen
+                          : AppColors.bearishRed,
+                      size: 12,
                     ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: 2),
-              Text(
-                name,
-                style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: AppColors.darkTextSecondary,
+                    const SizedBox(width: 2),
+                    Expanded(
+                      child: Text(
+                        change,
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                              color: isPositive
+                                  ? AppColors.bullishGreen
+                                  : AppColors.bearishRed,
+                            ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                price,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: AppColors.darkTextPrimary,
-                      fontWeight: FontWeight.w500,
-                    ),
-              ),
-              const SizedBox(height: 2),
-              Row(
-                children: [
-                  Icon(
-                    isPositive ? Icons.arrow_upward : Icons.arrow_downward,
-                    color: isPositive
-                        ? AppColors.bullishGreen
-                        : AppColors.bearishRed,
-                    size: 12,
-                  ),
-                  const SizedBox(width: 2),
-                  Expanded(
-                    child: Text(
-                      change,
-                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                            color: isPositive
-                                ? AppColors.bullishGreen
-                                : AppColors.bearishRed,
-                          ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ],
+                  ],
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }

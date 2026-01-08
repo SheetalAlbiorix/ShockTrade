@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shock_app/core/config/app_colors.dart';
 
 /// Stats cards showing 52W high/low and volume
 class StatsCards extends StatelessWidget {
@@ -13,7 +14,7 @@ class StatsCards extends StatelessWidget {
           Expanded(
             child: _StatsCard(
               items: const [
-                _StatItem(label: '52W High', value: '\$198.23'),
+                _StatItem(label: '52W High', value: '₹198.23'),
                 _StatItem(label: 'Volume', value: '75.3M'),
               ],
             ),
@@ -22,7 +23,7 @@ class StatsCards extends StatelessWidget {
           Expanded(
             child: _StatsCard(
               items: const [
-                _StatItem(label: '52W Low', value: '\$135.00'),
+                _StatItem(label: '52W Low', value: '₹135.00'),
                 _StatItem(label: 'Avg. Volume', value: '62.1M'),
               ],
             ),
@@ -43,7 +44,7 @@ class _StatsCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF15151A),
+        color: AppColors.darkCardBackground,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -65,7 +66,7 @@ class _StatsCard extends StatelessWidget {
                 Text(
                   item.label,
                   style: const TextStyle(
-                    color: Color(0xFF8E8E93),
+                    color: AppColors.darkTextSecondary,
                     fontSize: 13,
                   ),
                 ),
@@ -73,7 +74,7 @@ class _StatsCard extends StatelessWidget {
                 Text(
                   item.value,
                   style: const TextStyle(
-                    color: Color(0xFFFFFFFF),
+                    color: AppColors.darkTextPrimary,
                     fontSize: 18,
                     fontWeight: FontWeight.w600,
                   ),
