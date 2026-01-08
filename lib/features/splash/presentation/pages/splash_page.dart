@@ -28,16 +28,7 @@ class _SplashPageState extends State<SplashPage> {
       body: Container(
         width: double.infinity,
         height: double.infinity,
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              AppColors.navActiveColor, // Cyan
-              AppColors.primaryBlue, // Blue
-            ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-        ),
+        color: AppColors.darkBackground,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [

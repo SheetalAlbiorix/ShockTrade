@@ -56,69 +56,90 @@ class _OnboardingPageState extends State<OnboardingPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black, // Dark background as per design
-      body: SafeArea(
-        child: Column(
-          children: [
-            // Skip button (optional, but good UX)
-            // Align(
-            //   alignment: Alignment.topRight,
-            //   child: TextButton(
-            //     onPressed: () => context.go('/login'),
-            //     child: const Text('Skip', style: TextStyle(color: Colors.white70)),
-            //   ),
-            // ),
-
-            Expanded(
-              child: PageView.builder(
-                controller: _pageController,
-                onPageChanged: (index) {
-                  setState(() {
-                    _currentPage = index;
-                  });
-                },
-                itemCount: _contents.length,
-                itemBuilder: (context, index) {
-                  return OnboardingContentWidget(content: _contents[index]);
-                },
-              ),
-            ),
-
-            // Bottom Section
-            Padding(
-              padding: const EdgeInsets.all(24.0),
-              child: Column(
-                children: [
-                  // Page Indicators
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: List.generate(
-                      _contents.length,
-                      (index) => Container(
-                        margin: const EdgeInsets.symmetric(horizontal: 4),
-                        width: 8,
-                        height: 8,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: _currentPage == index
-                              ? AppColors.navActiveColor
-                              : Colors.white24,
-                        ),
-                      ),
-                    ),
+      backgroundColor: AppColors.darkBackground,
+      body: Stack(
+        children: [
+          // Background Gradient Element (Subtle)
+          Positioned(
+            top: -100,
+            right: -100,
+            child: Container(
+              width: 300,
+              height: 300,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppColors.primaryBlue.withOpacity(0.05),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.primaryBlue.withOpacity(0.15),
+                    blurRadius: 100,
+                    spreadRadius: 20,
                   ),
-                  const SizedBox(height: 32),
-                  // Button
-                  PrimaryButton(
-                    text: _getButtonText(),
-                    onPressed: _onNext,
-                  ),
-                  const SizedBox(height: 16),
                 ],
               ),
             ),
-          ],
-        ),
+          ),
+
+          SafeArea(
+            child: Column(
+              children: [
+                Expanded(
+                  child: PageView.builder(
+                    controller: _pageController,
+                    onPageChanged: (index) {
+                      setState(() {
+                        _currentPage = index;
+                      });
+                    },
+                    itemCount: _contents.length,
+                    itemBuilder: (context, index) {
+                      return OnboardingContentWidget(content: _contents[index]);
+                    },
+                  ),
+                ),
+
+                // Bottom Control Section
+                Container(
+                  padding: const EdgeInsets.all(32.0),
+                  child: Column(
+                    children: [
+                      // Modern Pill Indicators
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: List.generate(
+                          _contents.length,
+                          (index) => AnimatedContainer(
+                            duration: const Duration(milliseconds: 300),
+                            margin: const EdgeInsets.symmetric(horizontal: 4),
+                            width: _currentPage == index ? 32 : 8,
+                            height: 6,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(100),
+                              color: _currentPage == index
+                                  ? AppColors.primaryBlue
+                                  : AppColors.darkCardBackground,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 40),
+
+                      // Full Width Action Button
+                      PrimaryButton(
+                        text: _getButtonText(),
+                        onPressed: _onNext,
+                        backgroundColor: AppColors.primaryBlue,
+                        textColor: Colors.white,
+                        borderRadius: 16,
+                      ),
+                      const SizedBox(height: 16),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -147,54 +168,81 @@ class OnboardingContentWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24.0),
+      padding: const EdgeInsets.symmetric(horizontal: 32.0),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          // Image
-          AspectRatio(
-            aspectRatio: 1,
+          // Image Container with Modern Stacking Effect
+          Expanded(
+            flex: 5,
             child: Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(32),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.3),
-                    blurRadius: 20,
-                    offset: const Offset(0, 10),
+              alignment: Alignment.center,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  // Glow underneath
+                  Container(
+                    width: 250,
+                    height: 250,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: AppColors.primaryBlue.withOpacity(0.05),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.primaryBlue.withOpacity(0.1),
+                          blurRadius: 60,
+                          spreadRadius: 10,
+                        ),
+                      ],
+                    ),
+                  ),
+                  // Image
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(32),
+                    // Ensure image fits beautifully
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxHeight: 320),
+                      child: Image.asset(
+                        content.imagePath,
+                        fit: BoxFit.contain,
+                      ),
+                    ),
                   ),
                 ],
               ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(32),
-                child: Image.asset(
-                  content.imagePath,
-                  fit: BoxFit.cover,
-                ),
-              ),
             ),
           ),
+
           const SizedBox(height: 48),
-          // Title
-          Text(
-            content.title,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              height: 1.2,
-            ),
-          ),
-          const SizedBox(height: 16),
-          // Description
-          Text(
-            content.description,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: Colors.white70,
-              fontSize: 16,
-              height: 1.5,
+
+          // Typography
+          Expanded(
+            flex: 3,
+            child: Column(
+              children: [
+                Text(
+                  content.title,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: AppColors.darkTextPrimary,
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: -0.5,
+                    height: 1.1,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  content.description,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: AppColors.darkTextSecondary,
+                    fontSize: 16,
+                    height: 1.6,
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+              ],
             ),
           ),
         ],

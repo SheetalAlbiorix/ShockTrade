@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shock_app/core/config/app_colors.dart';
 import 'package:shock_app/core/widgets/primary_button.dart';
-import 'package:shock_app/core/widgets/custom_text_field.dart';
 
 class RegisterPage extends ConsumerStatefulWidget {
   const RegisterPage({super.key});
@@ -101,22 +100,32 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: AppColors.darkBackground,
       appBar: AppBar(
-        backgroundColor: Colors.black,
+        backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
+          icon: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: AppColors.darkCardBackground,
+              border: Border.all(color: AppColors.darkDivider),
+            ),
+            child: const Icon(Icons.arrow_back_ios_new,
+                size: 16, color: AppColors.darkTextPrimary),
+          ),
           onPressed: () => context.pop(),
         ),
         title: const Text(
           'Create Account',
           style: TextStyle(
-            color: Colors.white,
+            color: AppColors.darkTextPrimary,
             fontSize: 20,
             fontWeight: FontWeight.bold,
           ),
         ),
+        centerTitle: true,
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -126,46 +135,130 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
             children: [
               const SizedBox(height: 24),
               // Full Name
-              const Text('Full Name', style: TextStyle(color: Colors.white70)),
+              const Text('Full Name',
+                  style: TextStyle(
+                      color: AppColors.darkTextSecondary,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500)),
               const SizedBox(height: 8),
-              CustomTextField(
+              TextFormField(
                 controller: _nameController,
-                hintText: 'Enter your full name',
-                prefixIcon: Icons.person_outline,
+                style: const TextStyle(
+                    color: AppColors.darkTextPrimary,
+                    fontWeight: FontWeight.w500),
+                decoration: InputDecoration(
+                  hintText: 'Enter your full name',
+                  hintStyle: TextStyle(
+                      color: AppColors.darkTextSecondary.withOpacity(0.5)),
+                  filled: true,
+                  fillColor: AppColors.darkCardBackground,
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                  prefixIcon: const Icon(Icons.person_outline,
+                      color: AppColors.darkTextSecondary),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide.none,
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: const BorderSide(color: AppColors.darkDivider),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: const BorderSide(color: AppColors.primaryBlue),
+                  ),
+                ),
               ),
               const SizedBox(height: 16),
 
               // Email
-              const Text('Email', style: TextStyle(color: Colors.white70)),
+              const Text('Email',
+                  style: TextStyle(
+                      color: AppColors.darkTextSecondary,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500)),
               const SizedBox(height: 8),
-              CustomTextField(
+              TextFormField(
                 controller: _emailController,
-                hintText: 'Enter your email',
-                prefixIcon: Icons.email_outlined,
                 keyboardType: TextInputType.emailAddress,
+                style: const TextStyle(
+                    color: AppColors.darkTextPrimary,
+                    fontWeight: FontWeight.w500),
+                decoration: InputDecoration(
+                  hintText: 'Enter your email',
+                  hintStyle: TextStyle(
+                      color: AppColors.darkTextSecondary.withOpacity(0.5)),
+                  filled: true,
+                  fillColor: AppColors.darkCardBackground,
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                  prefixIcon: const Icon(Icons.email_outlined,
+                      color: AppColors.darkTextSecondary),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide.none,
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: const BorderSide(color: AppColors.darkDivider),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: const BorderSide(color: AppColors.primaryBlue),
+                  ),
+                ),
               ),
               const SizedBox(height: 16),
 
               // Password
-              const Text('Password', style: TextStyle(color: Colors.white70)),
+              const Text('Password',
+                  style: TextStyle(
+                      color: AppColors.darkTextSecondary,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500)),
               const SizedBox(height: 8),
-              CustomTextField(
+              TextFormField(
                 controller: _passwordController,
-                hintText: 'Create a strong password',
-                prefixIcon: Icons.lock_outline, // Keeping consistent with login
                 obscureText: !_isPasswordVisible,
-                suffixIcon: IconButton(
-                  icon: Icon(
-                    _isPasswordVisible
-                        ? Icons.visibility_outlined
-                        : Icons.visibility_off_outlined,
-                    color: Colors.white70,
+                style: const TextStyle(
+                    color: AppColors.darkTextPrimary,
+                    fontWeight: FontWeight.w500),
+                decoration: InputDecoration(
+                  hintText: 'Create a strong password',
+                  hintStyle: TextStyle(
+                      color: AppColors.darkTextSecondary.withOpacity(0.5)),
+                  filled: true,
+                  fillColor: AppColors.darkCardBackground,
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                  prefixIcon: const Icon(Icons.lock_outline,
+                      color: AppColors.darkTextSecondary),
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _isPasswordVisible
+                          ? Icons.visibility_outlined
+                          : Icons.visibility_off_outlined,
+                      color: AppColors.darkTextSecondary,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _isPasswordVisible = !_isPasswordVisible;
+                      });
+                    },
                   ),
-                  onPressed: () {
-                    setState(() {
-                      _isPasswordVisible = !_isPasswordVisible;
-                    });
-                  },
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide.none,
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: const BorderSide(color: AppColors.darkDivider),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: const BorderSide(color: AppColors.primaryBlue),
+                  ),
                 ),
               ),
               const SizedBox(height: 12),
@@ -182,12 +275,15 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
               ),
               const SizedBox(height: 6),
               if (_strengthText.isNotEmpty)
-                Text(
-                  _strengthText,
-                  style: TextStyle(
-                      color: _strengthColor,
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: Text(
+                    _strengthText,
+                    style: TextStyle(
+                        color: _strengthColor,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold),
+                  ),
                 ),
               if (_strengthText.isEmpty)
                 const SizedBox(height: 14), // Placeholder height
@@ -195,25 +291,52 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
 
               // Confirm Password
               const Text('Confirm Password',
-                  style: TextStyle(color: Colors.white70)),
+                  style: TextStyle(
+                      color: AppColors.darkTextSecondary,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500)),
               const SizedBox(height: 8),
-              CustomTextField(
+              TextFormField(
                 controller: _confirmPasswordController,
-                hintText: 'Re-enter your password',
-                prefixIcon: Icons.lock_outline,
                 obscureText: !_isConfirmPasswordVisible,
-                suffixIcon: IconButton(
-                  icon: Icon(
-                    _isConfirmPasswordVisible
-                        ? Icons.visibility_outlined
-                        : Icons.visibility_off_outlined,
-                    color: Colors.white70,
+                style: const TextStyle(
+                    color: AppColors.darkTextPrimary,
+                    fontWeight: FontWeight.w500),
+                decoration: InputDecoration(
+                  hintText: 'Re-enter your password',
+                  hintStyle: TextStyle(
+                      color: AppColors.darkTextSecondary.withOpacity(0.5)),
+                  filled: true,
+                  fillColor: AppColors.darkCardBackground,
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                  prefixIcon: const Icon(Icons.lock_outline,
+                      color: AppColors.darkTextSecondary),
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _isConfirmPasswordVisible
+                          ? Icons.visibility_outlined
+                          : Icons.visibility_off_outlined,
+                      color: AppColors.darkTextSecondary,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _isConfirmPasswordVisible = !_isConfirmPasswordVisible;
+                      });
+                    },
                   ),
-                  onPressed: () {
-                    setState(() {
-                      _isConfirmPasswordVisible = !_isConfirmPasswordVisible;
-                    });
-                  },
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide.none,
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: const BorderSide(color: AppColors.darkDivider),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: const BorderSide(color: AppColors.primaryBlue),
+                  ),
                 ),
               ),
               const SizedBox(height: 24),
@@ -226,9 +349,12 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                     height: 24,
                     child: Checkbox(
                       value: _agreedToTerms,
-                      activeColor: AppColors.navActiveColor, // Cyan
-                      checkColor: Colors.black,
-                      side: const BorderSide(color: Colors.white54),
+                      activeColor: AppColors.primaryBlue,
+                      checkColor: Colors.white,
+                      side:
+                          const BorderSide(color: AppColors.darkTextSecondary),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(4)),
                       onChanged: (val) {
                         setState(() {
                           _agreedToTerms = val ?? false;
@@ -242,19 +368,19 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                       TextSpan(
                         text: 'I agree to the ',
                         style: const TextStyle(
-                            color: Colors.white70, fontSize: 13),
+                            color: AppColors.darkTextSecondary, fontSize: 13),
                         children: [
                           TextSpan(
                             text: 'Terms & Conditions',
                             style: const TextStyle(
-                                color: AppColors.navActiveColor,
+                                color: AppColors.primaryBlue,
                                 fontWeight: FontWeight.bold),
                           ),
                           const TextSpan(text: ' and '),
                           TextSpan(
                             text: 'Privacy Policy',
                             style: const TextStyle(
-                                color: AppColors.navActiveColor,
+                                color: AppColors.primaryBlue,
                                 fontWeight: FontWeight.bold),
                           ),
                           const TextSpan(text: '.'),
@@ -269,6 +395,12 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
               PrimaryButton(
                 text: 'Create Account',
                 onPressed: _handleRegister,
+                backgroundColor: _agreedToTerms
+                    ? AppColors.primaryBlue
+                    : AppColors.darkCardBackground,
+                textColor:
+                    _agreedToTerms ? Colors.white : AppColors.darkTextSecondary,
+                borderRadius: 16,
               ),
               const SizedBox(height: 24),
             ],
@@ -279,22 +411,24 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
   }
 
   Widget _buildStrengthBar(int index, double currentStrength) {
-    // 3 bars total.
-    // Index 1, 2, 3.
-    // Logic:
-    // Weak (0.3) -> Bar 1 filled.
-    // Medium (0.6) -> Bar 1, 2 filled.
-    // Strong (1.0) -> Bar 1, 2, 3 filled.
-
     bool isActive = false;
     if (currentStrength >= 0.3 && index == 1) isActive = true;
     if (currentStrength >= 0.6 && index == 2) isActive = true;
     if (currentStrength >= 1.0 && index == 3) isActive = true;
 
-    return Container(
+    // Use AppColors for strength
+    Color activeColor = _strengthColor;
+    // If logic uses fixed colors, map them to AppColors
+    if (_strengthColor == Colors.red) activeColor = AppColors.bearishRed;
+    if (_strengthColor == Colors.orange)
+      activeColor = AppColors.chartOrange; // Assuming chartOrange or similar
+    if (_strengthColor == Colors.green) activeColor = AppColors.bullishGreen;
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
       height: 4,
       decoration: BoxDecoration(
-        color: isActive ? _strengthColor : const Color(0xFF2C2C2E), // Dark grey
+        color: isActive ? activeColor : AppColors.darkCardBackground,
         borderRadius: BorderRadius.circular(2),
       ),
     );
