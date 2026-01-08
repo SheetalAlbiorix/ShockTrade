@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 import 'package:shock_app/core/config/app_colors.dart';
 import 'package:shock_app/core/widgets/primary_button.dart';
 import 'package:shock_app/core/widgets/custom_text_field.dart';
-import 'package:shock_app/features/auth/application/providers/auth_providers.dart';
 
 class LoginPage extends ConsumerStatefulWidget {
   const LoginPage({super.key});
@@ -26,12 +25,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   }
 
   void _handleLogin() {
-    // For now, simple navigation as no real auth integration requested in this specific step task other than UI
-    // But keeping structure for future.
-    if (_emailController.text.isNotEmpty &&
-        _passwordController.text.isNotEmpty) {
-      context.go('/home');
-    }
+    context.go('/home');
   }
 
   @override

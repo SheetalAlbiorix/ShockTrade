@@ -86,7 +86,11 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
   void _handleRegister() {
     if (_agreedToTerms) {
       // Implement registration logic
-      context.go('/home');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Text('Account created successfully. Please login.')),
+      );
+      context.go('/login');
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please agree to Terms & Conditions')),
