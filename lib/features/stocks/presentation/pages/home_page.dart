@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:shock_app/core/config/app_colors.dart';
 import 'package:shock_app/core/config/app_strings.dart';
 import 'package:shock_app/core/config/theme_provider.dart';
@@ -90,6 +91,9 @@ class HomePage extends ConsumerWidget {
               ],
             ),
             const SizedBox(height: 24),
+
+            const SizedBox(height: 24),
+
             // Top Gainers Section
             _buildSectionHeader(context, AppStrings.topGainers),
             const SizedBox(height: 12),
@@ -126,6 +130,7 @@ class HomePage extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: 24),
+
             // Top Losers Section
             _buildSectionHeader(context, AppStrings.topLosers),
             const SizedBox(height: 12),
@@ -208,9 +213,8 @@ class HomePage extends ConsumerWidget {
             children: [
               Icon(
                 isPositive ? Icons.arrow_upward : Icons.arrow_downward,
-                color: isPositive
-                    ? AppColors.bullishGreen
-                    : AppColors.bearishRed,
+                color:
+                    isPositive ? AppColors.bullishGreen : AppColors.bearishRed,
                 size: 14,
               ),
               const SizedBox(width: 4),
@@ -247,85 +251,88 @@ class HomePage extends ConsumerWidget {
     required String change,
     required bool isPositive,
   }) {
-    return Container(
-      width: 140,
-      margin: const EdgeInsets.only(right: 12),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: AppColors.darkCardBackground,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: isPositive
-              ? AppColors.bullishGreen.withOpacity(0.3)
-              : AppColors.bearishRed.withOpacity(0.3),
-          width: 1,
+    return GestureDetector(
+      onTap: () => context.go('/stock-detail?symbol=$symbol&name=$name'),
+      child: Container(
+        width: 140,
+        margin: const EdgeInsets.only(right: 12),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: AppColors.darkCardBackground,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isPositive
+                ? AppColors.bullishGreen.withOpacity(0.3)
+                : AppColors.bearishRed.withOpacity(0.3),
+            width: 1,
+          ),
         ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                symbol,
-                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      color: AppColors.darkTextPrimary,
-                      fontWeight: FontWeight.bold,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  symbol,
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        color: AppColors.darkTextPrimary,
+                        fontWeight: FontWeight.bold,
+                      ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  name,
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: AppColors.darkTextSecondary,
+                      ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  price,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: AppColors.darkTextPrimary,
+                        fontWeight: FontWeight.w500,
+                      ),
+                ),
+                const SizedBox(height: 2),
+                Row(
+                  children: [
+                    Icon(
+                      isPositive ? Icons.arrow_upward : Icons.arrow_downward,
+                      color: isPositive
+                          ? AppColors.bullishGreen
+                          : AppColors.bearishRed,
+                      size: 12,
                     ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: 2),
-              Text(
-                name,
-                style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: AppColors.darkTextSecondary,
+                    const SizedBox(width: 2),
+                    Expanded(
+                      child: Text(
+                        change,
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                              color: isPositive
+                                  ? AppColors.bullishGreen
+                                  : AppColors.bearishRed,
+                            ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                price,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: AppColors.darkTextPrimary,
-                      fontWeight: FontWeight.w500,
-                    ),
-              ),
-              const SizedBox(height: 2),
-              Row(
-                children: [
-                  Icon(
-                    isPositive ? Icons.arrow_upward : Icons.arrow_downward,
-                    color: isPositive
-                        ? AppColors.bullishGreen
-                        : AppColors.bearishRed,
-                    size: 12,
-                  ),
-                  const SizedBox(width: 2),
-                  Expanded(
-                    child: Text(
-                      change,
-                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                            color: isPositive
-                                ? AppColors.bullishGreen
-                                : AppColors.bearishRed,
-                          ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ],
+                  ],
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }

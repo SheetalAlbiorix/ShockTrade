@@ -5,6 +5,7 @@ import 'package:shock_app/features/splash/presentation/pages/splash_page.dart';
 import 'package:shock_app/features/onboarding/presentation/pages/onboarding_page.dart';
 import 'package:shock_app/features/auth/presentation/pages/register_page.dart';
 import 'package:shock_app/features/auth/presentation/pages/forgot_password_page.dart';
+import 'package:shock_app/features/stock_detail/presentation/stock_detail_screen.dart';
 
 /// Application router configuration using GoRouter
 final appRouter = GoRouter(
@@ -39,6 +40,16 @@ final appRouter = GoRouter(
       path: '/home',
       name: 'home',
       builder: (context, state) => const NavigationShell(),
+    ),
+    GoRoute(
+      path: '/stock-detail',
+      name: 'stock-detail',
+      builder: (context, state) {
+        final symbol = state.uri.queryParameters['symbol'] ?? 'AAPL';
+        final name = state.uri.queryParameters['name'] ?? 'Apple Inc.';
+        // Use symbol as the key for the provider
+        return StockDetailScreen(symbol: symbol, name: name);
+      },
     ),
 
     // Add more routes as features are developed:
