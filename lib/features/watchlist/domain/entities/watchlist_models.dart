@@ -52,12 +52,17 @@ class WatchlistGroup {
   /// Returns the count of stocks in this group
   int get stockCount => stocks.length;
 
-  /// Creates a copy with updated expanded state
-  WatchlistGroup copyWith({bool? isExpanded}) {
+  /// Creates a copy with updated properties
+  WatchlistGroup copyWith({
+    String? id,
+    String? name,
+    List<Stock>? stocks,
+    bool? isExpanded,
+  }) {
     return WatchlistGroup(
-      id: id,
-      name: name,
-      stocks: stocks,
+      id: id ?? this.id,
+      name: name ?? this.name,
+      stocks: stocks ?? this.stocks,
       isExpanded: isExpanded ?? this.isExpanded,
     );
   }
