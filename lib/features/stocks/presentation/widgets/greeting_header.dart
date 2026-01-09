@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:shock_app/core/config/app_colors.dart';
 
 class GreetingHeader extends StatelessWidget {
@@ -18,7 +19,8 @@ class GreetingHeader extends StatelessWidget {
               shape: BoxShape.circle,
               border: Border.all(color: AppColors.premiumAccentBlue, width: 2),
               image: const DecorationImage(
-                image: NetworkImage('https://i.pravatar.cc/150?img=11'), // Placeholder avatar
+                image: NetworkImage(
+                    'https://i.pravatar.cc/150?img=11'), // Placeholder avatar
                 fit: BoxFit.cover,
               ),
               boxShadow: [
@@ -31,7 +33,7 @@ class GreetingHeader extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 12),
-          
+
           // Greeting & Name
           Expanded(
             child: Column(
@@ -53,8 +55,13 @@ class GreetingHeader extends StatelessWidget {
               ],
             ),
           ),
-          
+
           // Actions
+          _buildActionButton(
+            Icons.candlestick_chart,
+            () => context.push('/professional-chart'),
+          ),
+          const SizedBox(width: 12),
           _buildActionButton(Icons.search, () {}),
           const SizedBox(width: 12),
           Stack(
