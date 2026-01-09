@@ -66,9 +66,11 @@ class _SparklinePainter extends CustomPainter {
       ).createShader(Rect.fromLTWH(0, 0, size.width, size.height))
       ..style = PaintingStyle.fill;
 
-    // Calculate min and max for scaling
-    final minValue = dataPoints.reduce((a, b) => a < b ? a : b);
-    final maxValue = dataPoints.reduce((a, b) => a > b ? a : b);
+    // Calculate min and max for scaling - ensure all values are doubles
+    final minValue =
+        dataPoints.map((e) => e.toDouble()).reduce((a, b) => a < b ? a : b);
+    final maxValue =
+        dataPoints.map((e) => e.toDouble()).reduce((a, b) => a > b ? a : b);
     final range = maxValue - minValue;
 
     // Create path for line

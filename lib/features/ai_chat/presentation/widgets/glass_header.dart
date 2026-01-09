@@ -22,7 +22,6 @@ class GlassHeader extends StatelessWidget implements PreferredSizeWidget {
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
         child: Container(
-          height: 64,
           decoration: BoxDecoration(
             color: AIChatColors.glassHeader,
             border: Border(
@@ -34,7 +33,8 @@ class GlassHeader extends StatelessWidget implements PreferredSizeWidget {
           ),
           child: SafeArea(
             bottom: false,
-            child: Padding(
+            child: Container(
+              height: 64,
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -50,61 +50,35 @@ class GlassHeader extends StatelessWidget implements PreferredSizeWidget {
                   ),
 
                   // Title and status
-                  Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
                       const Text(
                         'ShockTrade AI',
                         style: TextStyle(
                           color: AIChatColors.textWhite,
-                          fontSize: 16,
+                          fontSize: 15,
                           fontWeight: FontWeight.bold,
                           letterSpacing: 0.5,
                         ),
                       ),
-                      const SizedBox(height: 2),
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          // Animated dot
-                          SizedBox(
-                            width: 8,
-                            height: 8,
-                            child: Stack(
-                              alignment: Alignment.center,
-                              children: [
-                                // Ping animation
-                                Container(
-                                  width: 8,
-                                  height: 8,
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    color:
-                                        AIChatColors.success.withOpacity(0.75),
-                                  ),
-                                ),
-                                // Solid dot
-                                Container(
-                                  width: 8,
-                                  height: 8,
-                                  decoration: const BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    color: AIChatColors.success,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(width: 6),
-                          const Text(
-                            'Online',
-                            style: TextStyle(
-                              color: Color(0xFF22c55e),
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
+                      const SizedBox(width: 8),
+                      Container(
+                        width: 6,
+                        height: 6,
+                        decoration: const BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: AIChatColors.success,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      const Text(
+                        'Online',
+                        style: TextStyle(
+                          color: Color(0xFF22c55e),
+                          fontSize: 11,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
                     ],
                   ),

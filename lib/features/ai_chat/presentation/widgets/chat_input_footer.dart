@@ -92,12 +92,10 @@ class _ChatInputFooterState extends State<ChatInputFooter> {
                         maxHeight: 128,
                       ),
                       decoration: BoxDecoration(
-                        color: AIChatColors.surfaceDark,
+                        color: Colors.transparent,
                         borderRadius: BorderRadius.circular(24),
                         border: Border.all(
-                          color: _focusNode.hasFocus
-                              ? AIChatColors.primary.withOpacity(0.5)
-                              : AIChatColors.whiteBorder10,
+                          color: const Color(0xFF2D3748), // Dark gray border
                           width: 1,
                         ),
                       ),
@@ -121,6 +119,9 @@ class _ChatInputFooterState extends State<ChatInputFooter> {
                                   fontSize: 15,
                                 ),
                                 border: InputBorder.none,
+                                enabledBorder: InputBorder.none,
+                                focusedBorder: InputBorder.none,
+                                filled: false,
                                 contentPadding: EdgeInsets.symmetric(
                                   horizontal: 16,
                                   vertical: 12,

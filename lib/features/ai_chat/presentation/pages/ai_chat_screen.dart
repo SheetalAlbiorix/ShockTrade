@@ -64,7 +64,7 @@ class _AIChatScreenState extends State<AIChatScreen> {
             'symbol': 'TATAMOTORS',
             'price': 945.65,
             'change': 1.8,
-            'sparkline': [920, 925, 930, 935, 928, 940, 945],
+            'sparkline': [920.0, 925.0, 930.0, 935.0, 928.0, 940.0, 945.0],
           },
         ),
       ]);
@@ -182,7 +182,9 @@ class _AIChatScreenState extends State<AIChatScreen> {
                       currentPrice: message.metadata?['price'] ?? 0.0,
                       changePercent: message.metadata?['change'] ?? 0.0,
                       isPositive: (message.metadata?['change'] ?? 0.0) >= 0,
-                      sparklineData: sparklineData?.cast<double>(),
+                      sparklineData: sparklineData
+                          ?.map((e) => (e as num).toDouble())
+                          .toList(),
                     );
                   }
 
