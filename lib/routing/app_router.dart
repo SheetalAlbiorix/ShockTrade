@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shock_app/core/widgets/navigation_shell.dart';
 import 'package:shock_app/features/auth/presentation/pages/login_page.dart';
@@ -8,6 +9,12 @@ import 'package:shock_app/features/ai_chat/presentation/pages/ai_chat_screen.dar
 /// Application router configuration using GoRouter
 final appRouter = GoRouter(
   initialLocation: '/home', // Changed from '/' to bypass login for testing
+  debugLogDiagnostics: true,
+  errorBuilder: (context, state) => Scaffold(
+    body: Center(
+      child: Text('Router Error: ${state.error}'),
+    ),
+  ),
   routes: [
     GoRoute(
       path: '/',

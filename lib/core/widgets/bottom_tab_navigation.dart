@@ -4,7 +4,7 @@ import 'package:shock_app/core/config/app_colors.dart';
 import 'package:shock_app/core/widgets/tab_item.dart';
 
 /// A modern, reusable bottom tab navigation component
-/// with dark theme styling, smooth animations, and accessibility support.
+/// with dark theme styling, smooth animations, and a floating trade button.
 class BottomTabNavigation extends StatelessWidget {
   final int currentIndex;
   final ValueChanged<int> onTap;
@@ -20,120 +20,149 @@ class BottomTabNavigation extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tabItems = tabs.isEmpty ? AppTabs.all : tabs;
+    // Ensure we have 5 tabs for this design
+    if (tabItems.length != 5) {
+      return const SizedBox();
+    }
 
-    return Container(
-      decoration: const BoxDecoration(
-        color: AppColors.navBackground,
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(20),
-          topRight: Radius.circular(20),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black26,
-            blurRadius: 10,
-            offset: Offset(0, -2),
+    return Stack(
+      clipBehavior: Clip.none,
+      alignment: Alignment.bottomCenter,
+      children: [
+        // Navigation Bar Container
+        Container(
+          padding: EdgeInsets.only(bottom: MediaQuery.of(context).padding.bottom),
+          margin: const EdgeInsets.symmetric(horizontal: 0),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [
+                Color(0xFF151B2B), // Premium card background likely
+                Color(0xFF0F1525), // Darker shade
+              ],
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+            ),
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(24),
+              topRight: Radius.circular(24),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.3),
+                blurRadius: 20,
+                offset: const Offset(0, -5),
+              ),
+              const BoxShadow(
+                color: Color(0xFF2A3245), // Top border color simulation
+                blurRadius: 0,
+                spreadRadius: 0,
+                offset: Offset(0, 1),
+              ),
+               const BoxShadow(
+                color: Color(0xFF2A3245), // Top border color simulation
+                blurRadius: 0,
+                spreadRadius: 0.5,
+                offset: Offset(0, -0.5),
+              ),
+            ],
           ),
-        ],
-      ),
-      child: SafeArea(
-        top: false,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: List.generate(
-              tabItems.length,
-              (index) => _TabItemWidget(
-                item: tabItems[index],
-                isActive: currentIndex == index,
-                onTap: () {
-                  HapticFeedback.lightImpact();
-                  onTap(index);
-                },
+          child: SizedBox(
+            height: 60,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _buildNavItem(context, tabItems[0], 0),
+                _buildNavItem(context, tabItems[1], 1),
+                const SizedBox(width: 48), // Space for center button
+                _buildNavItem(context, tabItems[3], 3),
+                _buildNavItem(context, tabItems[4], 4),
+              ],
+            ),
+          ),
+        ),
+
+        // Floating Center Button (Trade)
+        Positioned(
+          bottom: 25 + MediaQuery.of(context).padding.bottom, // Adjusted for dynamic height
+          child: GestureDetector(
+            onTap: () {
+              HapticFeedback.mediumImpact();
+              onTap(2); // Trade index
+            },
+            child: Container(
+              width: 64,
+              height: 64,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: AppColors.premiumBlueGradient,
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.premiumAccentBlue.withOpacity(0.4),
+                    blurRadius: 15,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+                border: Border.all(
+                  color: Colors.white.withOpacity(0.2),
+                  width: 1,
+                ),
+              ),
+              child: const Icon(
+                Icons.swap_horiz,
+                color: Colors.white,
+                size: 32,
               ),
             ),
           ),
         ),
-      ),
+      ],
     );
   }
-}
 
-class _TabItemWidget extends StatelessWidget {
-  final TabItem item;
-  final bool isActive;
-  final VoidCallback onTap;
-
-  const _TabItemWidget({
-    required this.item,
-    required this.isActive,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildNavItem(BuildContext context, TabItem item, int index) {
+    final isActive = currentIndex == index;
+    
     return Semantics(
       label: item.semanticLabel,
       selected: isActive,
       button: true,
       child: InkWell(
-        onTap: onTap,
+        onTap: () {
+          HapticFeedback.lightImpact();
+          onTap(index);
+        },
         borderRadius: BorderRadius.circular(12),
         child: Container(
-          constraints: const BoxConstraints(
-            minWidth: 64,
-            minHeight: 48,
-          ),
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            curve: Curves.easeInOut,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 200),
-                  transitionBuilder: (child, animation) => FadeTransition(
-                    opacity: animation,
-                    child: ScaleTransition(
-                      scale: Tween<double>(begin: 0.8, end: 1.0).animate(animation),
-                      child: child,
-                    ),
-                  ),
-                  child: Icon(
-                    isActive ? item.activeIcon : item.icon,
-                    key: ValueKey(isActive),
-                    color: isActive
-                        ? AppColors.navActiveColor
-                        : AppColors.navInactiveColor,
-                    size: 24,
-                  ),
+          constraints: const BoxConstraints(minWidth: 64),
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 200),
+                transitionBuilder: (child, animation) => ScaleTransition(
+                  scale: animation,
+                  child: child,
                 ),
-                AnimatedOpacity(
-                  duration: const Duration(milliseconds: 200),
-                  opacity: isActive ? 1.0 : 0.0,
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    height: isActive ? 18 : 0,
-                    child: Padding(
-                      padding: const EdgeInsets.only(top: 4),
-                      child: Text(
-                        item.label,
-                        style: TextStyle(
-                          color: AppColors.navActiveColor,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ),
+                child: Icon(
+                  isActive ? item.activeIcon : item.icon,
+                  key: ValueKey(isActive),
+                  size: 24,
+                  color: isActive ? AppColors.premiumAccentBlue : AppColors.darkTextSecondary,
                 ),
-              ],
-            ),
+              ),
+              const SizedBox(height: 4),
+              AnimatedDefaultTextStyle(
+                duration: const Duration(milliseconds: 200),
+                style: TextStyle(
+                  color: isActive ? AppColors.premiumAccentBlue : AppColors.darkTextSecondary,
+                  fontSize: 10,
+                  fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
+                  fontFamily: 'Roboto', // Assuming default font or system font
+                ),
+                child: Text(item.label),
+              ),
+            ],
           ),
         ),
       ),
