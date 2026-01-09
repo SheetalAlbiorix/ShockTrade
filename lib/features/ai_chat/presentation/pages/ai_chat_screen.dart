@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shock_app/core/providers/navigation_provider.dart';
 import 'package:shock_app/features/ai_chat/domain/chat_message.dart';
 import 'package:shock_app/features/ai_chat/presentation/ai_chat_colors.dart';
 import 'package:shock_app/features/ai_chat/presentation/widgets/glass_header.dart';
@@ -11,14 +13,14 @@ import 'package:shock_app/features/ai_chat/presentation/widgets/typing_indicator
 import 'package:shock_app/features/ai_chat/presentation/widgets/chat_input_footer.dart';
 
 /// AI Chat Screen - Pixel perfect implementation matching HTML design
-class AIChatScreen extends StatefulWidget {
+class AIChatScreen extends ConsumerStatefulWidget {
   const AIChatScreen({super.key});
 
   @override
-  State<AIChatScreen> createState() => _AIChatScreenState();
+  ConsumerState<AIChatScreen> createState() => _AIChatScreenState();
 }
 
-class _AIChatScreenState extends State<AIChatScreen> {
+class _AIChatScreenState extends ConsumerState<AIChatScreen> {
   final ScrollController _scrollController = ScrollController();
   final List<ChatMessage> _messages = [];
   bool _isTyping = false;
@@ -131,7 +133,9 @@ class _AIChatScreenState extends State<AIChatScreen> {
         children: [
           // Glass header
           GlassHeader(
-            onBackPressed: () => Navigator.of(context).pop(),
+            onBackPressed: () {
+              ref.read(currentTabIndexProvider.notifier).state = 0;
+            },
             onMenuPressed: () {
               // Show menu
             },

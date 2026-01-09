@@ -31,11 +31,11 @@ class AppTabs {
     semanticLabel: 'Portfolio tab',
   );
 
-  static const trade = TabItem(
-    label: 'Trade',
-    icon: Icons.swap_horiz,
-    activeIcon: Icons.swap_horiz,
-    semanticLabel: 'Trade tab',
+  static const aiChat = TabItem(
+    label: 'AI Chat',
+    icon: Icons.auto_awesome_outlined,
+    activeIcon: Icons.auto_awesome,
+    semanticLabel: 'AI Chat tab',
   );
 
   static const watchlist = TabItem(
@@ -52,5 +52,11 @@ class AppTabs {
     semanticLabel: 'Account tab',
   );
 
-  static const List<TabItem> all = [home, portfolio, trade, watchlist, account];
+  static const List<TabItem> all = [
+    home,
+    portfolio,
+    aiChat,
+    watchlist,
+    account
+  ];
 }

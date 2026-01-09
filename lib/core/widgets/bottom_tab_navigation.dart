@@ -31,7 +31,8 @@ class BottomTabNavigation extends StatelessWidget {
       children: [
         // Navigation Bar Container
         Container(
-          padding: EdgeInsets.only(bottom: MediaQuery.of(context).padding.bottom),
+          padding:
+              EdgeInsets.only(bottom: MediaQuery.of(context).padding.bottom),
           margin: const EdgeInsets.symmetric(horizontal: 0),
           decoration: BoxDecoration(
             gradient: const LinearGradient(
@@ -58,7 +59,7 @@ class BottomTabNavigation extends StatelessWidget {
                 spreadRadius: 0,
                 offset: Offset(0, 1),
               ),
-               const BoxShadow(
+              const BoxShadow(
                 color: Color(0xFF2A3245), // Top border color simulation
                 blurRadius: 0,
                 spreadRadius: 0.5,
@@ -81,17 +82,20 @@ class BottomTabNavigation extends StatelessWidget {
           ),
         ),
 
-        // Floating Center Button (Trade)
+        // Floating Center Button (AI Chat)
         Positioned(
-          bottom: 25 + MediaQuery.of(context).padding.bottom, // Adjusted for dynamic height
+          bottom: 25 +
+              MediaQuery.of(context)
+                  .padding
+                  .bottom, // Adjusted for dynamic height
           child: GestureDetector(
             onTap: () {
               HapticFeedback.mediumImpact();
-              onTap(2); // Trade index
+              onTap(2); // AI Chat index
             },
             child: Container(
-              width: 64,
-              height: 64,
+              width: 56,
+              height: 56,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: AppColors.premiumBlueGradient,
@@ -108,9 +112,9 @@ class BottomTabNavigation extends StatelessWidget {
                 ),
               ),
               child: const Icon(
-                Icons.swap_horiz,
+                Icons.auto_awesome,
                 color: Colors.white,
-                size: 32,
+                size: 26,
               ),
             ),
           ),
@@ -121,7 +125,7 @@ class BottomTabNavigation extends StatelessWidget {
 
   Widget _buildNavItem(BuildContext context, TabItem item, int index) {
     final isActive = currentIndex == index;
-    
+
     return Semantics(
       label: item.semanticLabel,
       selected: isActive,
@@ -148,14 +152,18 @@ class BottomTabNavigation extends StatelessWidget {
                   isActive ? item.activeIcon : item.icon,
                   key: ValueKey(isActive),
                   size: 24,
-                  color: isActive ? AppColors.premiumAccentBlue : AppColors.darkTextSecondary,
+                  color: isActive
+                      ? AppColors.premiumAccentBlue
+                      : AppColors.darkTextSecondary,
                 ),
               ),
               const SizedBox(height: 4),
               AnimatedDefaultTextStyle(
                 duration: const Duration(milliseconds: 200),
                 style: TextStyle(
-                  color: isActive ? AppColors.premiumAccentBlue : AppColors.darkTextSecondary,
+                  color: isActive
+                      ? AppColors.premiumAccentBlue
+                      : AppColors.darkTextSecondary,
                   fontSize: 10,
                   fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
                   fontFamily: 'Roboto', // Assuming default font or system font
