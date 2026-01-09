@@ -34,8 +34,7 @@ class AppColors {
 
   // Navigation Bar Colors
   static const Color navBackground = Color(0xFF0B0F14);
-  static const Color navActiveColor =
-      Color(0xFF135bec); // Updated to match primary
+  static const Color navActiveColor = Color(0xFF135bec); // Updated to match primary
   static const Color navInactiveColor = Color(0xFF6B7280);
 
   // Chart Colors
@@ -76,5 +75,44 @@ class AppColors {
     colors: [Color(0xFFef4444), Color(0xFFeab308), Color(0xFF10b981)],
     begin: Alignment.centerLeft,
     end: Alignment.centerRight,
+  );
+
+  // Premium Fintech Dark Theme Colors (From Redesign)
+  static const Color premiumBackgroundDark = Color(0xFF050B14); // Deep dark blue/black
+  static const Color premiumBackgroundLight = Color(0xFF0F1525); // Slightly lighter for gradient
+  
+  static const Color premiumCardBackground = Color(0xFF151B2B);
+  static const Color premiumCardBorder = Color(0xFF2A3245);
+  static const Color premiumSurface = Color(0xFF1E2435);
+  
+  // Accents
+  static const Color premiumAccentBlue = Color(0xFF2962FF);
+  static const Color premiumAccentGreen = Color(0xFF00E676);
+  static const Color premiumAccentRed = Color(0xFFFF1744);
+  static const Color premiumAccentYellow = Color(0xFFFFC107);
+  
+  // Gradients
+  static const LinearGradient premiumDarkGradient = LinearGradient(
+    colors: [premiumBackgroundDark, premiumBackgroundLight],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+
+  static const LinearGradient premiumCardGradient = LinearGradient(
+    colors: [Color(0xFF1A1F30), Color(0xFF151B2B)],
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+  );
+  
+  static const LinearGradient premiumBlueGradient = LinearGradient(
+    colors: [Color(0xFF2962FF), Color(0xFF1565C0)],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+
+  static const LinearGradient graphGradientGreen = LinearGradient(
+    colors: [Color(0xFF00E676), Colors.transparent],
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
   );
 }

@@ -3,8 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shock_app/core/config/app_colors.dart';
 import 'package:shock_app/core/providers/navigation_provider.dart';
 import 'package:shock_app/core/widgets/bottom_tab_navigation.dart';
-import 'package:shock_app/features/ai_chat/presentation/pages/ai_chat_page.dart';
-import 'package:shock_app/features/news/presentation/pages/news_page.dart';
+import 'package:shock_app/features/account/presentation/pages/account_page.dart';
+import 'package:shock_app/features/ai_chat/presentation/pages/ai_chat_screen.dart';
 import 'package:shock_app/features/portfolio/presentation/pages/portfolio_page.dart';
 import 'package:shock_app/features/stocks/presentation/pages/home_page.dart';
 import 'package:shock_app/features/watchlist/presentation/pages/watchlist_page.dart';
@@ -24,18 +24,20 @@ class NavigationShell extends ConsumerWidget {
         index: currentIndex,
         children: const [
           HomePage(),
-          WatchlistPage(),
           PortfolioPage(),
-          AIChatPage(),
-          NewsPage(),
+          AIChatScreen(),
+          WatchlistPage(),
+          AccountPage(),
         ],
       ),
-      bottomNavigationBar: BottomTabNavigation(
-        currentIndex: currentIndex,
-        onTap: (index) {
-          ref.read(currentTabIndexProvider.notifier).state = index;
-        },
-      ),
+      bottomNavigationBar: currentIndex == 2
+          ? null
+          : BottomTabNavigation(
+              currentIndex: currentIndex,
+              onTap: (index) {
+                ref.read(currentTabIndexProvider.notifier).state = index;
+              },
+            ),
     );
   }
 }

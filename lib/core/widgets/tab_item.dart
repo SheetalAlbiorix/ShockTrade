@@ -24,13 +24,6 @@ class AppTabs {
     semanticLabel: 'Home tab',
   );
 
-  static const watchlist = TabItem(
-    label: 'Watchlist',
-    icon: Icons.star_outline,
-    activeIcon: Icons.star,
-    semanticLabel: 'Watchlist tab',
-  );
-
   static const portfolio = TabItem(
     label: 'Portfolio',
     icon: Icons.pie_chart_outline,
@@ -40,17 +33,30 @@ class AppTabs {
 
   static const aiChat = TabItem(
     label: 'AI Chat',
-    icon: Icons.chat_bubble_outline,
-    activeIcon: Icons.chat_bubble,
+    icon: Icons.auto_awesome_outlined,
+    activeIcon: Icons.auto_awesome,
     semanticLabel: 'AI Chat tab',
   );
 
-  static const news = TabItem(
-    label: 'News',
-    icon: Icons.article_outlined,
-    activeIcon: Icons.article,
-    semanticLabel: 'News tab',
+  static const watchlist = TabItem(
+    label: 'Watchlist',
+    icon: Icons.bookmark_border,
+    activeIcon: Icons.bookmark,
+    semanticLabel: 'Watchlist tab',
   );
 
-  static const List<TabItem> all = [home, watchlist, portfolio, aiChat, news];
+  static const account = TabItem(
+    label: 'Account',
+    icon: Icons.person_outline,
+    activeIcon: Icons.person,
+    semanticLabel: 'Account tab',
+  );
+
+  static const List<TabItem> all = [
+    home,
+    portfolio,
+    aiChat,
+    watchlist,
+    account
+  ];
 }

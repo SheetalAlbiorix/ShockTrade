@@ -22,7 +22,7 @@ class _SplashPageState extends State<SplashPage> {
     await Future.delayed(const Duration(seconds: 2));
 
     if (mounted) {
-      context.go('/login');
+      context.go('/home');
     }
   }
 

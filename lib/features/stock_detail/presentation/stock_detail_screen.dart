@@ -31,12 +31,24 @@ class StockDetailScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: AppColors.darkBackground,
       body: CustomScrollView(
+        clipBehavior: Clip.hardEdge,
         slivers: [
           // Header
           SliverAppBar(
             pinned: true,
-            backgroundColor: AppColors.darkBackground.withOpacity(0.95),
+            backgroundColor: AppColors.darkBackground,
             elevation: 0,
+            surfaceTintColor: Colors.transparent,
+            shadowColor: Colors.transparent,
+            forceElevated: false,
+            toolbarHeight: kToolbarHeight,
+            bottom: PreferredSize(
+              preferredSize: const Size.fromHeight(0.5),
+              child: Container(
+                color: AppColors.glassBorder,
+                height: 0.5,
+              ),
+            ),
             leading: IconButton(
               icon: const Icon(Icons.arrow_back,
                   color: AppColors.darkTextPrimary),

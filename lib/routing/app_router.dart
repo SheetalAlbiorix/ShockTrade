@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shock_app/core/widgets/navigation_shell.dart';
 import 'package:shock_app/features/auth/presentation/pages/login_page.dart';
@@ -6,10 +7,17 @@ import 'package:shock_app/features/onboarding/presentation/pages/onboarding_page
 import 'package:shock_app/features/auth/presentation/pages/register_page.dart';
 import 'package:shock_app/features/auth/presentation/pages/forgot_password_page.dart';
 import 'package:shock_app/features/stock_detail/presentation/stock_detail_screen.dart';
+import 'package:shock_app/features/ai_chat/presentation/pages/ai_chat_screen.dart';
 
 /// Application router configuration using GoRouter
 final appRouter = GoRouter(
-  initialLocation: '/', // Start with splash screen
+  initialLocation: '/home', // Changed from '/' to bypass login for testing
+  debugLogDiagnostics: true,
+  errorBuilder: (context, state) => Scaffold(
+    body: Center(
+      child: Text('Router Error: ${state.error}'),
+    ),
+  ),
   routes: [
     GoRoute(
       path: '/',
@@ -51,8 +59,15 @@ final appRouter = GoRouter(
         return StockDetailScreen(symbol: symbol, name: name);
       },
     ),
+    GoRoute(
+      path: '/ai-chat',
+      name: 'ai-chat',
+      builder: (context, state) => const AIChatScreen(),
+    ),
 
     // Add more routes as features are developed:
     // GoRoute(path: '/stocks/:symbol', ...),
+    // GoRoute(path: '/portfolio', ...),
+    // GoRoute(path: '/alerts', ...),
   ],
 );
