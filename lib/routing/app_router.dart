@@ -8,6 +8,7 @@ import 'package:shock_app/features/auth/presentation/pages/register_page.dart';
 import 'package:shock_app/features/auth/presentation/pages/forgot_password_page.dart';
 import 'package:shock_app/features/stock_detail/presentation/stock_detail_screen.dart';
 import 'package:shock_app/features/ai_chat/presentation/pages/ai_chat_screen.dart';
+import 'package:shock_app/features/chart/presentation/pages/professional_chart_screen.dart';
 
 /// Application router configuration using GoRouter
 final appRouter = GoRouter(
@@ -63,6 +64,16 @@ final appRouter = GoRouter(
       path: '/ai-chat',
       name: 'ai-chat',
       builder: (context, state) => const AIChatScreen(),
+    ),
+    GoRoute(
+      path: '/professional-chart',
+      name: 'professional-chart',
+      builder: (context, state) {
+        final symbol = state.uri.queryParameters['symbol'] ?? 'RELIANCE.NS';
+        final name =
+            state.uri.queryParameters['name'] ?? 'Reliance Industries Ltd';
+        return ProfessionalChartScreen(symbol: symbol, name: name);
+      },
     ),
 
     // Add more routes as features are developed:
