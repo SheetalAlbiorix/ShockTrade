@@ -1,144 +1,194 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shock_app/core/config/app_colors.dart';
-import 'package:shock_app/core/config/app_strings.dart';
 import 'package:shock_app/features/watchlist/application/providers/watchlist_provider.dart';
 import 'package:shock_app/features/watchlist/domain/entities/watchlist_models.dart';
-import 'package:shock_app/features/watchlist/presentation/widgets/watchlist_group_card.dart';
+import 'package:shock_app/features/watchlist/presentation/widgets/index_summary_cards.dart';
 
-/// Watchlist page - displays user's stock watchlists with expandable groups
-class WatchlistPage extends ConsumerWidget {
+import 'package:shock_app/features/watchlist/presentation/widgets/watchlist_search_bar.dart';
+import 'package:shock_app/features/watchlist/presentation/widgets/watchlist_stock_card.dart';
+import 'package:shock_app/features/watchlist/presentation/widgets/watchlist_tabs.dart';
+import 'package:shock_app/features/watchlist/presentation/pages/edit_watchlist_page.dart';
+
+class WatchlistPage extends ConsumerStatefulWidget {
   const WatchlistPage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final watchlistGroups = ref.watch(watchlistProvider);
-    final isLoading = ref.watch(watchlistLoadingProvider);
+  ConsumerState<WatchlistPage> createState() => _WatchlistPageState();
+}
 
-    return Scaffold(
-      backgroundColor: AppColors.darkBackground,
-      appBar: AppBar(
-        backgroundColor: AppColors.darkSurface,
-        elevation: 0,
-        title: const Text(
-          AppStrings.watchlist,
-          style: TextStyle(
-            color: AppColors.darkTextPrimary,
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        centerTitle: false,
+class _WatchlistPageState extends ConsumerState<WatchlistPage> {
+  int _selectedTabIndex = 0;
+  String _searchQuery = '';
+
+  void _addStockToCurrentWatchlist(Stock stock) {
+    if (_selectedTabIndex >= ref.read(watchlistProvider).length) return;
+    
+    final currentGroup = ref.read(watchlistProvider)[_selectedTabIndex];
+    // Check if already exists
+    if (currentGroup.stocks.any((s) => s.symbol == stock.symbol)) {
+       ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('${stock.symbol} is already in ${currentGroup.name}')),
+      );
+      return;
+    }
+
+    final updatedStocks = List<Stock>.from(currentGroup.stocks)..add(stock);
+    ref.read(watchlistProvider.notifier).updateWatchlistStocks(currentGroup.id, updatedStocks);
+     
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Added ${stock.symbol} to ${currentGroup.name}')),
+    );
+  }
+
+  Future<bool> _confirmDelete(Stock stock) async {
+    return await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppColors.premiumCardBackground,
+        title: const Text('Remove Stock?', style: TextStyle(color: AppColors.darkTextPrimary)),
+        content: Text('Are you sure you want to remove ${stock.symbol} from this watchlist?', style: const TextStyle(color: AppColors.darkTextSecondary)),
         actions: [
-          IconButton(
-            onPressed: () {
-              HapticFeedback.lightImpact();
-              _showAddDialog(context);
-            },
-            icon: const Icon(
-              Icons.add,
-              color: AppColors.darkTextPrimary,
-            ),
-            tooltip: 'Add stock or watchlist',
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel', style: TextStyle(color: AppColors.darkTextSecondary)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Remove', style: TextStyle(color: AppColors.premiumAccentRed)),
           ),
         ],
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(1),
-          child: Container(
-            height: 1,
-            color: AppColors.darkDivider,
-          ),
-        ),
       ),
-      body: RefreshIndicator(
-        onRefresh: () async {
-          ref.read(watchlistLoadingProvider.notifier).state = true;
-          await ref.read(watchlistProvider.notifier).refresh();
-          ref.read(watchlistLoadingProvider.notifier).state = false;
-        },
-        color: AppColors.navActiveColor,
-        backgroundColor: AppColors.darkCardBackground,
-        child: watchlistGroups.isEmpty
-            ? _buildEmptyState(context)
-            : _buildWatchlist(context, ref, watchlistGroups),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          HapticFeedback.mediumImpact();
-          _showAddDialog(context);
-        },
-        backgroundColor: AppColors.navActiveColor,
-        foregroundColor: Colors.white,
-        elevation: 4,
-        child: const Icon(Icons.add),
-      ),
-    );
+    ) ?? false;
   }
 
-  Widget _buildWatchlist(
-    BuildContext context,
-    WidgetRef ref,
-    List<WatchlistGroup> groups,
-  ) {
-    return ListView.builder(
-      padding: const EdgeInsets.only(top: 8, bottom: 80),
-      itemCount: groups.length,
-      itemBuilder: (context, index) {
-        final group = groups[index];
-        return WatchlistGroupCard(
-          group: group,
-          onToggle: () {
-            ref.read(watchlistProvider.notifier).toggleGroup(group.id);
-          },
-          onTrade: (stock) => _showTradeDialog(context, stock),
-          onDetails: (stock) => _showDetailsDialog(context, stock),
-        );
-      },
-    );
+  void _removeStock(String watchlistId, Stock stock) async {
+      // Logic handled by Dismissible, this is just helper if needed
+      final currentGroup = ref.read(watchlistProvider).firstWhere((g) => g.id == watchlistId);
+      final updatedStocks = List<Stock>.from(currentGroup.stocks)..removeWhere((s) => s.symbol == stock.symbol);
+      ref.read(watchlistProvider.notifier).updateWatchlistStocks(watchlistId, updatedStocks);
   }
 
-  Widget _buildEmptyState(BuildContext context) {
-    return Center(
-      child: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(32),
+  void _onReorder(int oldIndex, int newIndex) {
+     if (_selectedTabIndex >= ref.read(watchlistProvider).length) return;
+     final currentGroup = ref.read(watchlistProvider)[_selectedTabIndex];
+     
+     if (oldIndex < newIndex) {
+      newIndex -= 1;
+    }
+    final updatedStocks = List<Stock>.from(currentGroup.stocks);
+    final item = updatedStocks.removeAt(oldIndex);
+    updatedStocks.insert(newIndex, item);
+
+    ref.read(watchlistProvider.notifier).updateWatchlistStocks(currentGroup.id, updatedStocks);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final watchlistGroups = ref.watch(watchlistProvider);
+    
+    // Safety check for index
+    if (_selectedTabIndex >= watchlistGroups.length) {
+      _selectedTabIndex = 0;
+    }
+
+    // Get Current Data
+    final currentGroup = watchlistGroups.isNotEmpty ? watchlistGroups[_selectedTabIndex] : null;
+    final currentStocks = currentGroup?.stocks ?? [];
+    final tabs = watchlistGroups.map((g) => g.name).toList();
+
+    // Prepare Search Results
+    List<Stock> searchResults = [];
+    if (_searchQuery.isNotEmpty) {
+      final masterList = ref.read(masterStocksProvider);
+      final lowerQuery = _searchQuery.toLowerCase();
+      
+      searchResults = masterList.where((stock) {
+         return stock.symbol.toLowerCase().contains(lowerQuery) ||
+                stock.name.toLowerCase().contains(lowerQuery);
+      }).toList();
+
+      // Dummy Data Fallback for testing
+      if (searchResults.isEmpty) {
+         searchResults = [
+           Stock.create(symbol: "${_searchQuery.toUpperCase()} LTD", name: "$_searchQuery Industries", price: 154.20, change: 5.5, changePercent: 3.4),
+           const Stock(symbol: "DUMMY1", name: "Dummy Stock 1", price: 100, change: 10, changePercent: 10.0, isPositive: true),
+           const Stock(symbol: "DUMMY2", name: "Dummy Stock 2", price: 200, change: -5, changePercent: -2.5, isPositive: false),
+         ];
+      }
+    }
+
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: AppColors.premiumDarkGradient,
+      ),
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        body: SafeArea(
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(
-                Icons.star_outline,
-                size: 80,
-                color: AppColors.navActiveColor.withValues(alpha: 0.5),
-              ),
-              const SizedBox(height: 24),
-              Text(
-                'No Watchlists Yet',
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      color: AppColors.darkTextPrimary,
+              // 1. Header
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Watchlist',
+                      style: TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.darkTextPrimary,
+                        letterSpacing: 0.5,
+                      ),
                     ),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                'Create a watchlist and add stocks to track their prices',
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: AppColors.darkTextSecondary,
+                    IconButton(
+                      onPressed: () {
+                         Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const EditWatchlistPage(),
+                          ),
+                        );
+                      },
+                      icon: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: AppColors.premiumSurface,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(
+                          Icons.edit_outlined,
+                          color: AppColors.darkTextPrimary,
+                          size: 20,
+                        ),
+                      ),
+                      tooltip: 'Edit Watchlist',
                     ),
-              ),
-              const SizedBox(height: 32),
-              ElevatedButton.icon(
-                onPressed: () {},
-                icon: const Icon(Icons.add),
-                label: const Text('Create Watchlist'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.navActiveColor,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
+                  ],
                 ),
+              ),
+  
+              // 2. Search Bar
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: WatchlistSearchBar(
+                  onChanged: (value) {
+                    setState(() {
+                      _searchQuery = value;
+                    });
+                  },
+                ),
+              ),
+              
+              const SizedBox(height: 8),
+
+              // 3. Content Body
+              Expanded(
+                child: _searchQuery.isNotEmpty 
+                  ? _buildSearchResults(searchResults)
+                  : _buildMainContent(tabs, currentStocks, currentGroup?.id ?? ''),
               ),
             ],
           ),
@@ -147,109 +197,108 @@ class WatchlistPage extends ConsumerWidget {
     );
   }
 
-  void _showAddDialog(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: AppColors.darkSurface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) {
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Add to Watchlist',
-                  style: TextStyle(
-                    color: AppColors.darkTextPrimary,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 20),
-                ListTile(
-                  leading: Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: AppColors.navActiveColor.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Icon(
-                      Icons.search,
-                      color: AppColors.navActiveColor,
-                    ),
-                  ),
-                  title: const Text(
-                    'Search & Add Stock',
-                    style: TextStyle(color: AppColors.darkTextPrimary),
-                  ),
-                  subtitle: const Text(
-                    'Find stocks by name or symbol',
-                    style: TextStyle(color: AppColors.darkTextSecondary),
-                  ),
-                  onTap: () {
-                    Navigator.pop(context);
-                    // TODO: Navigate to stock search
-                  },
-                ),
-                const SizedBox(height: 8),
-                ListTile(
-                  leading: Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: AppColors.navActiveColor.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Icon(
-                      Icons.create_new_folder_outlined,
-                      color: AppColors.navActiveColor,
-                    ),
-                  ),
-                  title: const Text(
-                    'Create New Watchlist',
-                    style: TextStyle(color: AppColors.darkTextPrimary),
-                  ),
-                  subtitle: const Text(
-                    'Organize stocks into groups',
-                    style: TextStyle(color: AppColors.darkTextSecondary),
-                  ),
-                  onTap: () {
-                    Navigator.pop(context);
-                    // TODO: Create new watchlist
-                  },
-                ),
-                const SizedBox(height: 16),
-              ],
+  Widget _buildSearchResults(List<Stock> results) {
+    return ListView.separated(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      itemCount: results.length,
+      separatorBuilder: (context, index) => Divider(color: AppColors.premiumCardBorder.withOpacity(0.5)),
+      itemBuilder: (context, index) {
+        final stock = results[index];
+        return ListTile(
+          contentPadding: EdgeInsets.zero,
+          leading: Container(
+            width: 40, height: 40,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: AppColors.premiumCardBackground,
+              borderRadius: BorderRadius.circular(8),
             ),
+            child: Text(stock.symbol[0], style: const TextStyle(color: AppColors.premiumAccentBlue, fontWeight: FontWeight.bold)),
+          ),
+          title: Text(stock.symbol, style: const TextStyle(color: AppColors.darkTextPrimary, fontWeight: FontWeight.bold)),
+          subtitle: Text(stock.name, style: const TextStyle(color: AppColors.darkTextSecondary)),
+          trailing: IconButton(
+            icon: const Icon(Icons.add_circle_outline, color: AppColors.premiumAccentGreen),
+            onPressed: () => _addStockToCurrentWatchlist(stock),
           ),
         );
       },
     );
   }
 
-  void _showTradeDialog(BuildContext context, Stock stock) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Trade ${stock.symbol} - Coming soon!'),
-        backgroundColor: AppColors.darkSurface,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-      ),
-    );
-  }
+  Widget _buildMainContent(List<String> tabs, List<Stock> currentStocks, String currentWatchlistId) {
+    return Column(
+      children: [
+        // Index Cards
+        const IndexSummaryCards(),
 
-  void _showDetailsDialog(BuildContext context, Stock stock) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('${stock.symbol} details - Coming soon!'),
-        backgroundColor: AppColors.darkSurface,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-      ),
+        const SizedBox(height: 24),
+
+        // Tabs
+        WatchlistTabs(
+          selectedIndex: _selectedTabIndex,
+          tabs: tabs,
+          onTabSelected: (index) {
+            setState(() {
+              _selectedTabIndex = index;
+            });
+          },
+        ),
+
+        const SizedBox(height: 16),
+
+        // Stock List
+        Expanded(
+          child: currentStocks.isEmpty
+              ? const Center(
+                  child: Text(
+                    'No stocks in this watchlist',
+                    style: TextStyle(color: AppColors.darkTextSecondary),
+                  ),
+                )
+              : ReorderableListView.builder(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  itemCount: currentStocks.length,
+                  onReorder: _onReorder,
+                  proxyDecorator: (child, index, animation) {
+                    return Material(
+                      color: Colors.transparent,
+                      child: Container(
+                         decoration: BoxDecoration(
+                           color: AppColors.premiumCardBackground,
+                           borderRadius: BorderRadius.circular(12),
+                           boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.5), blurRadius: 10)],
+                         ),
+                         child: child,
+                      ),
+                    );
+                  },
+                  itemBuilder: (context, index) {
+                    final stock = currentStocks[index];
+                    return Dismissible(
+                      key: ValueKey('${stock.symbol}_$index'), // Unique key
+                      direction: DismissDirection.endToStart,
+                      confirmDismiss: (direction) => _confirmDelete(stock),
+                      onDismissed: (direction) {
+                          _removeStock(currentWatchlistId, stock);
+                      },
+                      background: Container(
+                        alignment: Alignment.centerRight,
+                        padding: const EdgeInsets.only(right: 20),
+                        color: AppColors.premiumAccentRed,
+                        child: const Icon(Icons.delete, color: Colors.white),
+                      ),
+                      child: Container(
+                         // Wrap with container to add spacing if needed, though ReorderableListView handles it.
+                         // StockListCard likely has padding.
+                         margin: const EdgeInsets.only(bottom: 12),
+                         child: WatchlistStockCard(stock: stock), // Reusing existing card widget
+                      ),
+                    );
+                  },
+                ),
+        ),
+      ],
     );
   }
 }
