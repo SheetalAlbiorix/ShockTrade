@@ -11,7 +11,7 @@ import 'package:shock_app/features/ai_chat/presentation/pages/ai_chat_screen.dar
 
 /// Application router configuration using GoRouter
 final appRouter = GoRouter(
-  initialLocation: '/home', // Changed from '/' to bypass login for testing
+  initialLocation: '/', // Changed from '/' to bypass login for testing
   debugLogDiagnostics: true,
   errorBuilder: (context, state) => Scaffold(
     body: Center(
