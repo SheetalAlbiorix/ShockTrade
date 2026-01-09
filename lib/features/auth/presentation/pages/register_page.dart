@@ -41,8 +41,16 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
   }
 
   void _handleRegister() {
-    if (!_agreedToTerms) return;
-    context.go('/login'); // Mock navigation
+    if (!_agreedToTerms) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please agree to the Terms of Service to continue'),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+      return;
+    }
+    context.go('/login');
   }
 
   @override
