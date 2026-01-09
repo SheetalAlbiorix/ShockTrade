@@ -2,13 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shock_app/core/widgets/navigation_shell.dart';
 import 'package:shock_app/features/auth/presentation/pages/login_page.dart';
-import 'package:shock_app/features/auth/presentation/pages/splash_page.dart';
+import 'package:shock_app/features/splash/presentation/pages/splash_page.dart';
+import 'package:shock_app/features/onboarding/presentation/pages/onboarding_page.dart';
+import 'package:shock_app/features/auth/presentation/pages/register_page.dart';
+import 'package:shock_app/features/auth/presentation/pages/forgot_password_page.dart';
 import 'package:shock_app/features/stock_detail/presentation/stock_detail_screen.dart';
 import 'package:shock_app/features/ai_chat/presentation/pages/ai_chat_screen.dart';
 
 /// Application router configuration using GoRouter
 final appRouter = GoRouter(
-  initialLocation: '/home', // Changed from '/' to bypass login for testing
+  initialLocation: '/', // Changed from '/' to bypass login for testing
   debugLogDiagnostics: true,
   errorBuilder: (context, state) => Scaffold(
     body: Center(
@@ -22,9 +25,24 @@ final appRouter = GoRouter(
       builder: (context, state) => const SplashPage(),
     ),
     GoRoute(
+      path: '/onboarding',
+      name: 'onboarding',
+      builder: (context, state) => const OnboardingPage(),
+    ),
+    GoRoute(
       path: '/login',
       name: 'login',
       builder: (context, state) => const LoginPage(),
+    ),
+    GoRoute(
+      path: '/register',
+      name: 'register',
+      builder: (context, state) => const RegisterPage(),
+    ),
+    GoRoute(
+      path: '/forgot-password',
+      name: 'forgot-password',
+      builder: (context, state) => const ForgotPasswordPage(),
     ),
     GoRoute(
       path: '/home',

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// App-wide color constants for stock market theme
+/// Modern premium dark color system for trading apps
 class AppColors {
   // Brand Colors
   static const Color primaryBlue = Color(0xFF135bec); // Updated from HTML
@@ -15,10 +15,14 @@ class AppColors {
   // Light Theme Colors
   static const Color lightBackground = Color(0xFFF6F6F8); // Updated from HTML
   static const Color lightSurface = Color(0xFFFFFFFF);
-  static const Color lightCardBackground = Color(0xFFFFFFFF);
-  static const Color lightTextPrimary = Color(0xFF212121);
-  static const Color lightTextSecondary = Color(0xFF757575);
-  static const Color lightDivider = Color(0xFFE0E0E0);
+
+  static const Color lightCardBackground = Color(0xFFF1F3F8);
+
+  static const Color lightTextPrimary = Color(0xFF0F1222);
+
+  static const Color lightTextSecondary = Color(0xFF6B7280);
+
+  static const Color lightDivider = Color(0xFFE3E6EF);
 
   // Dark Theme Colors (Updated from HTML)
   static const Color darkBackground = Color(0xFF101622); // New from HTML
@@ -44,7 +48,10 @@ class AppColors {
   static Color glassBackground = Colors.white.withOpacity(0.03);
   static Color glassBorder = Colors.white.withOpacity(0.05);
 
-  // Gradient Colors
+  // ─────────────────────────────────────────────
+  // Gradients (Modern Depth)
+  // ─────────────────────────────────────────────
+
   static const LinearGradient bullishGradient = LinearGradient(
     colors: [Color(0xFF10b981), Color(0xFF64DD17)],
     begin: Alignment.topLeft,
