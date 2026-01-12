@@ -34,18 +34,20 @@ class AppColors {
 
   // Navigation Bar Colors
   static const Color navBackground = Color(0xFF0B0F14);
-  static const Color navActiveColor = Color(0xFF135bec); // Updated to match primary
+  static const Color navActiveColor =
+      Color(0xFF135bec); // Updated to match primary
   static const Color navInactiveColor = Color(0xFF6B7280);
 
   // Chart Colors
   static const Color chartGreen = Color(0xFF10b981); // Match bullish
-  static const Color chartRed = Color(0xFFef4444); // Match bearish
   static const Color chartBlue = Color(0xFF3b82f6); // For moving average
-  static const Color chartOrange = Color(0xFFFF7043);
   static const Color chartPurple = Color(0xFFAB47BC);
+  static const Color chartOrange = Color(0xFFFF7043);
+  static const Color primaryGold = Color(0xFFFFA726); // Orange-Gold for slider
 
   // Glass-morphism effect
-  static Color glassBackground = Colors.white.withOpacity(0.03);
+  static Color glassBackground =
+      Colors.white.withOpacity(0.03); // Removed duplicate constant above
   static Color glassBorder = Colors.white.withOpacity(0.05);
 
   // ─────────────────────────────────────────────
@@ -78,19 +80,21 @@ class AppColors {
   );
 
   // Premium Fintech Dark Theme Colors (From Redesign)
-  static const Color premiumBackgroundDark = Color(0xFF050B14); // Deep dark blue/black
-  static const Color premiumBackgroundLight = Color(0xFF0F1525); // Slightly lighter for gradient
-  
+  static const Color premiumBackgroundDark =
+      Color(0xFF050B14); // Deep dark blue/black
+  static const Color premiumBackgroundLight =
+      Color(0xFF0F1525); // Slightly lighter for gradient
+
   static const Color premiumCardBackground = Color(0xFF151B2B);
   static const Color premiumCardBorder = Color(0xFF2A3245);
   static const Color premiumSurface = Color(0xFF1E2435);
-  
+
   // Accents
   static const Color premiumAccentBlue = Color(0xFF2962FF);
   static const Color premiumAccentGreen = Color(0xFF00E676);
   static const Color premiumAccentRed = Color(0xFFFF1744);
   static const Color premiumAccentYellow = Color(0xFFFFC107);
-  
+
   // Gradients
   static const LinearGradient premiumDarkGradient = LinearGradient(
     colors: [premiumBackgroundDark, premiumBackgroundLight],
@@ -103,7 +107,7 @@ class AppColors {
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
   );
-  
+
   static const LinearGradient premiumBlueGradient = LinearGradient(
     colors: [Color(0xFF2962FF), Color(0xFF1565C0)],
     begin: Alignment.topLeft,

@@ -1,19 +1,25 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shock_app/core/config/app_colors.dart';
+import 'package:shock_app/features/stocks/application/top_movers_controller.dart';
+import 'package:shock_app/features/stock_detail/domain/models.dart';
+import 'package:shock_app/core/utils/stock_logo_mapper.dart';
 
-class TopMoversSection extends StatefulWidget {
+class TopMoversSection extends ConsumerStatefulWidget {
   const TopMoversSection({super.key});
 
   @override
-  State<TopMoversSection> createState() => _TopMoversSectionState();
+  ConsumerState<TopMoversSection> createState() => _TopMoversSectionState();
 }
 
-class _TopMoversSectionState extends State<TopMoversSection> {
-  int _selectedIndex = 0;
+class _TopMoversSectionState extends ConsumerState<TopMoversSection> {
+  int _selectedTabIndex = 0;
 
   @override
   Widget build(BuildContext context) {
+    final topMoversState = ref.watch(topMoversProvider);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -53,28 +59,52 @@ class _TopMoversSectionState extends State<TopMoversSection> {
             borderRadius: BorderRadius.circular(20),
             border: Border.all(color: AppColors.premiumCardBorder),
           ),
-          child: Column(
-            children: [
-              if (_selectedIndex == 0) ...[
-                 _buildStockItem(
-                  'RELIANCE', 'NSE', '₹ 2,456.15', '+1.85%', true, 'https://logo.clearbit.com/reliance.com'),
-                 _buildDivider(),
-                 _buildStockItem(
-                  'TATASTEEL', 'BSE', '₹ 124.50', '+2.40%', true, 'https://logo.clearbit.com/tatasteel.com'),
-                 _buildDivider(),
-                 _buildStockItem(
-                  'ADANIENT', 'NSE', '₹ 2,510.00', '+0.95%', true, 'https://logo.clearbit.com/adani.com'),
-              ] else ...[
-                 _buildStockItem(
-                  'INFY', 'NSE', '₹ 1,380.45', '-0.45%', false, 'https://logo.clearbit.com/infosys.com'),
-                 _buildDivider(),
-                 _buildStockItem(
-                  'WIPRO', 'NSE', '₹ 402.10', '-1.20%', false, 'https://logo.clearbit.com/wipro.com'),
-                 _buildDivider(),
-                 _buildStockItem(
-                  'HCLTECH', 'NSE', '₹ 1,120.30', '-0.90%', false, 'https://logo.clearbit.com/hcltech.com'),
-              ],
-            ],
+          child: topMoversState.when(
+            data: (stocks) {
+              final filteredStocks = stocks
+                  .where((s) {
+                    if (_selectedTabIndex == 0) return s.isPositive;
+                    return !s.isPositive;
+                  })
+                  .take(4)
+                  .toList();
+
+              if (filteredStocks.isEmpty) {
+                return Padding(
+                  padding: const EdgeInsets.all(20.0),
+                  child: Center(
+                    child: Text(
+                      _selectedTabIndex == 0
+                          ? 'No gainers right now'
+                          : 'No losers right now',
+                      style:
+                          const TextStyle(color: AppColors.darkTextSecondary),
+                    ),
+                  ),
+                );
+              }
+
+              return Column(
+                children: [
+                  for (int i = 0; i < filteredStocks.length; i++) ...[
+                    _buildStockItem(context, filteredStocks[i]),
+                    if (i < filteredStocks.length - 1) _buildDivider(),
+                  ]
+                ],
+              );
+            },
+            loading: () => const Center(
+                child: Padding(
+              padding: EdgeInsets.all(20.0),
+              child:
+                  CircularProgressIndicator(color: AppColors.premiumAccentBlue),
+            )),
+            error: (e, st) => Center(
+                child: Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Text('Failed to load data',
+                  style: TextStyle(color: AppColors.premiumAccentRed)),
+            )),
           ),
         ),
       ],
@@ -82,9 +112,13 @@ class _TopMoversSectionState extends State<TopMoversSection> {
   }
 
   Widget _buildTab(String title, int index) {
-    final isSelected = _selectedIndex == index;
+    final isSelected = _selectedTabIndex == index;
     return GestureDetector(
-      onTap: () => setState(() => _selectedIndex = index),
+      onTap: () {
+        setState(() {
+          _selectedTabIndex = index;
+        });
+      },
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
@@ -94,7 +128,9 @@ class _TopMoversSectionState extends State<TopMoversSection> {
         child: Text(
           title,
           style: TextStyle(
-            color: isSelected ? AppColors.darkTextPrimary : AppColors.darkTextSecondary,
+            color: isSelected
+                ? AppColors.darkTextPrimary
+                : AppColors.darkTextSecondary,
             fontWeight: FontWeight.w600,
             fontSize: 12,
           ),
@@ -110,9 +146,17 @@ class _TopMoversSectionState extends State<TopMoversSection> {
     );
   }
 
-  Widget _buildStockItem(String name, String exchange, String price, String change, bool isPositive, String logoUrl) {
+  Widget _buildStockItem(BuildContext context, StockDetailState stock) {
+    // Use API image if available, else fallback to StockLogoMapper
+    String logoUrl = stock.imageUrl ??
+        StockLogoMapper.getLogoUrl(stock.symbol.replaceAll('.NS', ''));
+
+    // Exchange logic
+    String exchange = 'NSE';
+
     return InkWell(
-      onTap: () => context.go('/stock-detail?symbol=$name&name=$name'),
+      onTap: () => context
+          .go('/stock-detail?symbol=${stock.symbol}&name=${stock.companyName}'),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Row(
@@ -125,24 +169,24 @@ class _TopMoversSectionState extends State<TopMoversSection> {
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Image.network(
-                  logoUrl,
-                  fit: BoxFit.contain,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Icon(
-                      Icons.business,
-                      color: AppColors.darkTextSecondary,
-                      size: 24,
-                    );
-                  },
-                ),
+                logoUrl,
+                fit: BoxFit.contain,
+                errorBuilder: (context, error, stackTrace) {
+                  return const Icon(
+                    Icons.business,
+                    color: AppColors.darkTextSecondary,
+                    size: 24,
+                  );
+                },
               ),
+            ),
             const SizedBox(width: 16),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    name,
+                    stock.symbol.replaceAll('.NS', ''),
                     style: const TextStyle(
                       color: AppColors.darkTextPrimary,
                       fontWeight: FontWeight.bold,
@@ -163,7 +207,7 @@ class _TopMoversSectionState extends State<TopMoversSection> {
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text(
-                  price,
+                  '₹ ${stock.price.toStringAsFixed(2)}',
                   style: const TextStyle(
                     color: AppColors.darkTextPrimary,
                     fontWeight: FontWeight.bold,
@@ -171,9 +215,11 @@ class _TopMoversSectionState extends State<TopMoversSection> {
                   ),
                 ),
                 Text(
-                  change,
+                  '${stock.isPositive ? '+' : ''}${stock.percentChange.toStringAsFixed(2)}%',
                   style: TextStyle(
-                    color: isPositive ? AppColors.premiumAccentGreen : AppColors.premiumAccentRed,
+                    color: stock.isPositive
+                        ? AppColors.premiumAccentGreen
+                        : AppColors.premiumAccentRed,
                     fontWeight: FontWeight.w600,
                     fontSize: 12,
                   ),

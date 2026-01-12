@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shock_app/core/config/app_colors.dart';
 import 'package:shock_app/features/portfolio/domain/entities/portfolio_models.dart';
