@@ -11,6 +11,7 @@ import 'package:shock_app/features/stock_detail/presentation/stock_detail_screen
 import 'package:shock_app/features/ai_chat/presentation/pages/ai_chat_screen.dart';
 import 'package:shock_app/features/chart/presentation/pages/professional_chart_screen.dart';
 import 'package:shock_app/features/news/presentation/pages/news_page.dart';
+import 'package:shock_app/features/account/presentation/pages/edit_profile_page.dart';
 
 /// Application router configuration using GoRouter
 final appRouter = GoRouter(
@@ -91,6 +92,11 @@ final appRouter = GoRouter(
       path: '/market-news',
       name: 'market-news',
       builder: (context, state) => const NewsPage(),
+    ),
+    GoRoute(
+      path: '/edit-profile',
+      name: 'edit-profile',
+      builder: (context, state) => const EditProfilePage(),
     ),
   ],
 );
