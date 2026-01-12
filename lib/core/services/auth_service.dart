@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
+import 'package:shock_app/core/config/env.dart';
 import 'package:shock_app/core/services/profile_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -11,7 +12,6 @@ class AuthService {
 
   Timer? _refreshTimer;
 
-  /// Exchanges the Firebase ID Token for a Supabase JWT
   Future<void> exchangeTokenAndAuthenticate() async {
     try {
       final user = FirebaseAuth.instance.currentUser;
@@ -30,8 +30,7 @@ class AuthService {
       // 2. Call Edge Function 'exchange-token'
       // We send the Firebase token in the body.
       // We EXPLICITLY set the Authorization header to the Anon Key to satisfy the Supabase Gateway.
-      const anonKey =
-          'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhobG9qeWRhbnlnb2F4d2F3dHBiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc5NTk4MzAsImV4cCI6MjA4MzUzNTgzMH0.cuzRoGNm0xFGbzIK76aYiCw1OB0lSepM3yR8zZS9aA4';
+      final anonKey = Env.supabaseAnonKey;
 
       final response = await _supabaseClient.functions.invoke(
         'exchange-token',

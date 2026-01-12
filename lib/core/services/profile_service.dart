@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:shock_app/core/config/env.dart';
 
 class ProfileService {
   final SupabaseClient _supabase;
@@ -60,9 +61,7 @@ class ProfileService {
       }
 
       // Re-create storage client to force headers
-      // Re-create storage client to force headers
-      // TODO: Move Supabase URL to a shared config to avoid duplication
-      const supabaseUrl = 'https://hhlojydanygoaxwawtpb.supabase.co';
+      final supabaseUrl = Env.supabaseUrl;
       final storageClient = SupabaseStorageClient(
         '$supabaseUrl/storage/v1',
         {
