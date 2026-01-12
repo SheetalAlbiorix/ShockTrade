@@ -13,6 +13,7 @@ import 'package:shock_app/features/chart/presentation/pages/professional_chart_s
 import 'package:shock_app/features/search/presentation/pages/search_page.dart';
 import 'package:shock_app/features/search/presentation/pages/trending_stocks_page.dart';
 import 'package:shock_app/features/news/presentation/pages/news_page.dart';
+import 'package:shock_app/features/alerts/presentation/pages/alerts_page.dart';
 
 /// Application router configuration using GoRouter
 final appRouter = GoRouter(
@@ -95,6 +96,10 @@ final appRouter = GoRouter(
       path: '/trending',
       name: 'trending',
       builder: (context, state) => const TrendingStocksPage(),
+    ),
+    GoRoute(
+      path: '/alerts',
+      builder: (context, state) => const AlertsPage(),
     ),
     GoRoute(
       path: '/market-news',
