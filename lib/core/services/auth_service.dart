@@ -68,4 +68,34 @@ class AuthService {
       rethrow;
     }
   }
+
+  /// Restores the session if a user is logged in and verified.
+  /// Returns 0 for success (Home), 1 for unverified (VerifyEmail), 2 for logged out (Onboarding).
+  /// Using int/enum for state is cleaner, but for now I'll use simple logic or return an enum.
+  /// Let's stick to the plan: return bool? No, we need 3 states.
+  /// Let's return AuthState enum or simple int.
+  /// 0: Authenticated -> Home
+  /// 1: Unverified -> VerifyEmail
+  /// 2: Unauthenticated -> Onboarding
+  Future<int> restoreSession() async {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
+        return 2;
+      }
+
+      await user.reload(); // Ensure we have latest verification status
+      if (!user.emailVerified) {
+        return 1;
+      }
+
+      // User verified, exchange token
+      await exchangeTokenAndAuthenticate();
+      return 0;
+    } catch (e) {
+      debugPrint("Session restoration failed: $e");
+      // If exchange fails, treat as unauthenticated so they can login again explicitly
+      return 2;
+    }
+  }
 }
