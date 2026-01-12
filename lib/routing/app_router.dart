@@ -5,12 +5,14 @@ import 'package:shock_app/features/auth/presentation/pages/login_page.dart';
 import 'package:shock_app/features/splash/presentation/pages/splash_page.dart';
 import 'package:shock_app/features/onboarding/presentation/pages/onboarding_page.dart';
 import 'package:shock_app/features/auth/presentation/pages/register_page.dart';
+import 'package:shock_app/features/auth/presentation/pages/verify_email_page.dart';
 import 'package:shock_app/features/auth/presentation/pages/forgot_password_page.dart';
 import 'package:shock_app/features/stock_detail/presentation/stock_detail_screen.dart';
 import 'package:shock_app/features/ai_chat/presentation/pages/ai_chat_screen.dart';
 import 'package:shock_app/features/chart/presentation/pages/professional_chart_screen.dart';
 import 'package:shock_app/features/search/presentation/pages/search_page.dart';
 import 'package:shock_app/features/search/presentation/pages/trending_stocks_page.dart';
+import 'package:shock_app/features/news/presentation/pages/news_page.dart';
 
 /// Application router configuration using GoRouter
 final appRouter = GoRouter(
@@ -41,6 +43,11 @@ final appRouter = GoRouter(
       path: '/register',
       name: 'register',
       builder: (context, state) => const RegisterPage(),
+    ),
+    GoRoute(
+      path: '/verify-email',
+      name: 'verify-email',
+      builder: (context, state) => const VerifyEmailPage(),
     ),
     GoRoute(
       path: '/forgot-password',
@@ -88,6 +95,11 @@ final appRouter = GoRouter(
       path: '/trending',
       name: 'trending',
       builder: (context, state) => const TrendingStocksPage(),
+    ),
+    GoRoute(
+      path: '/market-news',
+      name: 'market-news',
+      builder: (context, state) => const NewsPage(),
     ),
   ],
 );
