@@ -13,7 +13,7 @@ class HighlightCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.premiumCardBackground,
+        color: const Color(0xFF131A2D),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppColors.premiumCardBorder, width: 1),
       ),
@@ -22,7 +22,7 @@ class HighlightCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: AppColors.bullishGreen.withValues(alpha: 0.1),
+              color: const Color(0xFF0C2B21),
               borderRadius: BorderRadius.circular(12),
             ),
             child: const Icon(Icons.auto_awesome, color: AppColors.bullishGreen, size: 24),
@@ -36,7 +36,7 @@ class HighlightCard extends StatelessWidget {
                   'BEST PERFORMER TODAY',
                   style: TextStyle(
                     color: AppColors.darkTextSecondary,
-                    fontSize: 11,
+                    fontSize: 10,
                     fontWeight: FontWeight.w600,
                     letterSpacing: 0.5,
                   ),
@@ -68,7 +68,7 @@ class HighlightCard extends StatelessWidget {
                 '+${holding.pnlPercentage.toStringAsFixed(2)}%',
                 style: const TextStyle(
                   color: AppColors.bullishGreen,
-                  fontSize: 13,
+                  fontSize: 12,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -83,11 +83,13 @@ class HighlightCard extends StatelessWidget {
 class PortfolioHoldingCard extends StatelessWidget {
   final Holding holding;
   final VoidCallback onTap;
+  final VoidCallback onEditTap;
 
   const PortfolioHoldingCard({
     super.key,
     required this.holding,
     required this.onTap,
+    required this.onEditTap,
   });
 
   @override
@@ -101,8 +103,8 @@ class PortfolioHoldingCard extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 16),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: AppColors.premiumCardBackground,
-          borderRadius: BorderRadius.circular(18),
+          color: const Color(0xFF131A2D),
+          borderRadius: BorderRadius.circular(20),
           border: Border.all(color: AppColors.premiumCardBorder, width: 1),
           boxShadow: [
             BoxShadow(
@@ -127,7 +129,7 @@ class PortfolioHoldingCard extends StatelessWidget {
                   child: Image.network(
                     holding.logoUrl,
                     errorBuilder: (context, error, stackTrace) => 
-                      const Center(child: Icon(Icons.business, color: AppColors.darkBackground)),
+                      const Center(child: Icon(Icons.business, color: Colors.blueGrey, size: 24)),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -142,6 +144,8 @@ class PortfolioHoldingCard extends StatelessWidget {
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
                         ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                       Text(
                         holding.symbol,
@@ -165,7 +169,7 @@ class PortfolioHoldingCard extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      '${holding.pnlAmount >= 0 ? "+" : ""}${holding.pnlPercentage.toStringAsFixed(2)}%',
+                      '${holding.isPositive ? "+" : ""}${holding.pnlPercentage.toStringAsFixed(2)}%',
                       style: TextStyle(
                         color: holding.isPositive ? AppColors.bullishGreen : AppColors.bearishRed,
                         fontSize: 12,
@@ -174,10 +178,17 @@ class PortfolioHoldingCard extends StatelessWidget {
                     ),
                   ],
                 ),
+                const SizedBox(width: 8),
+                IconButton(
+                  icon: const Icon(Icons.more_vert, color: AppColors.darkTextSecondary, size: 20),
+                  onPressed: onEditTap,
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                ),
               ],
             ),
             const SizedBox(height: 16),
-            const Divider(color: AppColors.premiumCardBorder, height: 1),
+            const Divider(color: Color(0xFF1E243A), height: 1),
             const SizedBox(height: 12),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,

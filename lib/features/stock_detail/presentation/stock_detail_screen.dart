@@ -9,6 +9,7 @@ import 'package:shock_app/features/stock_detail/presentation/widgets/market_over
 import 'package:shock_app/features/stock_detail/presentation/widgets/news_card.dart';
 import 'package:shock_app/features/stock_detail/presentation/widgets/time_filter_tabs.dart';
 import 'package:shock_app/features/stock_detail/presentation/widgets/week_range_indicator.dart';
+import 'package:shock_app/features/portfolio/application/providers/portfolio_provider.dart';
 
 /// Stock detail screen with modern HTML-inspired design
 class StockDetailScreen extends ConsumerWidget {
@@ -89,6 +90,17 @@ class StockDetailScreen extends ConsumerWidget {
                     const Icon(Icons.search, color: AppColors.darkTextPrimary),
                 onPressed: () {},
               ),
+              // Check if stock is in portfolio
+              ref.watch(holdingsProvider).any((h) => h.symbol == symbol)
+                  ? IconButton(
+                      icon: const Icon(Icons.edit_note, color: AppColors.darkTextPrimary),
+                      onPressed: () {
+                        final holding = ref.read(holdingsProvider).firstWhere((h) => h.symbol == symbol);
+                        context.push('/portfolio-edit-holding/${holding.id}');
+                      },
+                      tooltip: 'Edit Portfolio Holding',
+                    )
+                  : const SizedBox.shrink(),
               IconButton(
                 icon: Icon(
                   state.isInWatchlist ? Icons.star : Icons.star_border,

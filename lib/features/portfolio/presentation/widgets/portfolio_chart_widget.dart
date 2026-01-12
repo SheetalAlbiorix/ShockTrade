@@ -13,10 +13,10 @@ class PortfolioChartWidget extends StatelessWidget {
     return Container(
       height: 220,
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(vertical: 20),
       decoration: BoxDecoration(
-        color: AppColors.premiumCardBackground,
-        borderRadius: BorderRadius.circular(20),
+        color: const Color(0xFF131A2D),
+        borderRadius: BorderRadius.circular(24),
         border: Border.all(color: AppColors.premiumCardBorder, width: 1),
       ),
       child: Stack(
@@ -25,21 +25,21 @@ class PortfolioChartWidget extends StatelessWidget {
             size: Size.infinite,
             painter: _LineChartPainter(dataPoints: dataPoints),
           ),
-          // Highlight dot (mocked as per image)
+          // Highlight dot (Centered as per image 1)
           Positioned(
-            left: 180,
-            top: 60,
+            left: 175,
+            top: 75,
             child: Container(
               width: 12,
               height: 12,
               decoration: BoxDecoration(
                 color: Colors.white,
                 shape: BoxShape.circle,
-                border: Border.all(color: AppColors.navActiveColor, width: 2),
+                border: Border.all(color: const Color(0xFF4C8CFF), width: 3),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.navActiveColor.withValues(alpha: 0.5),
-                    blurRadius: 8,
+                    color: const Color(0xFF4C8CFF).withValues(alpha: 0.6),
+                    blurRadius: 10,
                     spreadRadius: 2,
                   ),
                 ],
@@ -62,18 +62,18 @@ class _LineChartPainter extends CustomPainter {
     if (dataPoints.length < 2) return;
 
     final paint = Paint()
-      ..color = AppColors.navActiveColor
+      ..color = const Color(0xFF4C8CFF)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 3
       ..strokeCap = StrokeCap.round;
 
     final areaPaint = Paint()
       ..shader = ui.Gradient.linear(
-        Offset(0, 0),
+        const Offset(0, 0),
         Offset(0, size.height),
         [
-          AppColors.navActiveColor.withValues(alpha: 0.35),
-          AppColors.navActiveColor.withValues(alpha: 0.0),
+          const Color(0xFF4C8CFF).withValues(alpha: 0.25),
+          const Color(0xFF4C8CFF).withValues(alpha: 0.0),
         ],
       )
       ..style = PaintingStyle.fill;
@@ -86,10 +86,9 @@ class _LineChartPainter extends CustomPainter {
     final double minY = dataPoints.map((p) => p.y).reduce((a, b) => a < b ? a : b);
     final double yRange = maxY - minY;
     
-    // Normalize Y values to fit in the chart area (leaving some padding)
     double normalizeY(double y) {
       if (yRange == 0) return size.height / 2;
-      return size.height - ((y - minY) / yRange * (size.height * 0.7) + (size.height * 0.15));
+      return size.height - ((y - minY) / yRange * (size.height * 0.6) + (size.height * 0.2));
     }
 
     path.moveTo(0, normalizeY(dataPoints[0].y));
@@ -100,7 +99,10 @@ class _LineChartPainter extends CustomPainter {
       final x = i * xInterval;
       final y = normalizeY(dataPoints[i].y);
       
+<<<<<<< HEAD
       // Use cubic bezier for smooth effect
+=======
+>>>>>>> c5d8d4e (feat: refine portfolio UI, implement sorting, and enhance navigation flows)
       final prevX = (i - 1) * xInterval;
       final prevY = normalizeY(dataPoints[i-1].y);
       

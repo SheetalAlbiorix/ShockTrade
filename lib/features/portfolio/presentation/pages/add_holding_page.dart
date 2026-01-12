@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shock_app/core/config/app_colors.dart';
+import 'package:shock_app/features/portfolio/application/providers/portfolio_provider.dart';
+import 'package:shock_app/features/portfolio/domain/entities/portfolio_models.dart';
 import 'package:intl/intl.dart';
 
 class AddHoldingPage extends ConsumerStatefulWidget {
@@ -14,19 +16,17 @@ class AddHoldingPage extends ConsumerStatefulWidget {
 class _AddHoldingPageState extends ConsumerState<AddHoldingPage> {
   final _quantityController = TextEditingController(text: '1');
   final _priceController = TextEditingController(text: '0.00');
+  final _searchController = TextEditingController();
   DateTime _selectedDate = DateTime.now();
   String _selectedExchange = 'NSE';
   
-  // Mock selected stock
-  final String _stockName = 'HDFC Bank Limited';
-  final String _stockSymbol = 'HDFCBANK';
-  final double _currentPrice = 1650.45;
-  final double _priceChange = 0.45;
+  StockSuggestion? _selectedStock;
 
   @override
   void dispose() {
     _quantityController.dispose();
     _priceController.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
@@ -34,6 +34,29 @@ class _AddHoldingPageState extends ConsumerState<AddHoldingPage> {
     final qty = double.tryParse(_quantityController.text) ?? 0;
     final price = double.tryParse(_priceController.text) ?? 0;
     return qty * price;
+  }
+
+  void _handleAdd() {
+    if (_selectedStock == null) return;
+    
+    final qty = double.tryParse(_quantityController.text) ?? 0;
+    final price = double.tryParse(_priceController.text) ?? 0;
+    
+    if (qty <= 0 || price <= 0) return;
+
+    final newHolding = Holding.mock(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      symbol: _selectedStock!.symbol,
+      name: _selectedStock!.name,
+      logoUrl: _selectedStock!.logoUrl,
+      quantity: qty,
+      avgPrice: price,
+      currentPrice: _selectedStock!.currentPrice,
+      purchaseDate: _selectedDate,
+    );
+
+    ref.read(holdingsProvider.notifier).addHolding(newHolding);
+    context.pop();
   }
 
   Future<void> _selectDate(BuildContext context) async {
@@ -66,6 +89,7 @@ class _AddHoldingPageState extends ConsumerState<AddHoldingPage> {
   @override
   Widget build(BuildContext context) {
     final currencyFormat = NumberFormat.currency(locale: 'en_IN', symbol: '₹');
+    final searchResults = ref.watch(stockSearchProvider);
 
     return Scaffold(
       backgroundColor: AppColors.premiumBackgroundDark,
@@ -100,9 +124,12 @@ class _AddHoldingPageState extends ConsumerState<AddHoldingPage> {
               ),
             ),
             const SizedBox(height: 12),
-            _buildSearchBar(),
+            _buildSearchBar(ref),
+            if (searchResults.isNotEmpty && _selectedStock == null)
+              _buildSearchResults(searchResults),
             const SizedBox(height: 16),
-            _buildSelectedStockCard(currencyFormat),
+            if (_selectedStock != null)
+              _buildSelectedStockCard(currencyFormat, _selectedStock!),
             const SizedBox(height: 32),
             const Text(
               'EXCHANGE',
@@ -177,33 +204,88 @@ class _AddHoldingPageState extends ConsumerState<AddHoldingPage> {
     );
   }
 
-  Widget _buildSearchBar() {
+  Widget _buildSearchBar(WidgetRef ref) {
     return Container(
       decoration: BoxDecoration(
         color: AppColors.premiumCardBackground,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: AppColors.premiumCardBorder),
       ),
-      child: const TextField(
-        style: TextStyle(color: AppColors.darkTextPrimary),
+      child: TextField(
+        controller: _searchController,
+        style: const TextStyle(color: AppColors.darkTextPrimary),
+        onChanged: (value) {
+          ref.read(stockSearchQueryProvider.notifier).state = value;
+          setState(() {
+            _selectedStock = null;
+          });
+        },
         decoration: InputDecoration(
           hintText: 'e.g. HDFC Bank, RELIANCE',
-          hintStyle: TextStyle(color: AppColors.darkTextSecondary, fontSize: 14),
-          prefixIcon: Icon(Icons.search, color: AppColors.darkTextSecondary),
+          hintStyle: const TextStyle(color: AppColors.darkTextSecondary, fontSize: 14),
+          prefixIcon: const Icon(Icons.search, color: AppColors.darkTextSecondary),
+          suffixIcon: _searchController.text.isNotEmpty ? IconButton(
+            icon: const Icon(Icons.cancel, color: AppColors.darkTextSecondary, size: 20),
+            onPressed: () {
+              _searchController.clear();
+              ref.read(stockSearchQueryProvider.notifier).state = '';
+              setState(() {
+                _selectedStock = null;
+              });
+            },
+          ) : null,
           border: InputBorder.none,
-          contentPadding: EdgeInsets.symmetric(vertical: 15),
+          contentPadding: const EdgeInsets.symmetric(vertical: 15),
         ),
       ),
     );
   }
 
-  Widget _buildSelectedStockCard(NumberFormat currencyFormat) {
+  Widget _buildSearchResults(List<StockSuggestion> results) {
+    return Container(
+      margin: const EdgeInsets.only(top: 8),
+      constraints: const BoxConstraints(maxHeight: 200),
+      decoration: BoxDecoration(
+        color: AppColors.premiumCardBackground,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.premiumCardBorder),
+      ),
+      child: ListView.separated(
+        shrinkWrap: true,
+        itemCount: results.length,
+        separatorBuilder: (_, __) => const Divider(color: AppColors.premiumCardBorder, height: 1),
+        itemBuilder: (context, index) {
+          final stock = results[index];
+          return ListTile(
+            leading: CircleAvatar(
+              backgroundColor: Colors.white,
+              backgroundImage: NetworkImage(stock.logoUrl),
+              radius: 16,
+            ),
+            title: Text(stock.name, style: const TextStyle(color: AppColors.darkTextPrimary, fontSize: 14, fontWeight: FontWeight.bold)),
+            subtitle: Text(stock.symbol, style: const TextStyle(color: AppColors.darkTextSecondary, fontSize: 12)),
+            onTap: () {
+              setState(() {
+                _selectedStock = stock;
+                _searchController.text = stock.name;
+                _priceController.text = stock.currentPrice.toString();
+              });
+              ref.read(stockSearchQueryProvider.notifier).state = '';
+            },
+            visualDensity: VisualDensity.compact,
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildSelectedStockCard(NumberFormat currencyFormat, StockSuggestion stock) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.premiumCardBackground,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.navActiveColor.withOpacity(0.5), width: 1),
+        border: Border.all(color: AppColors.navActiveColor.withValues(alpha: 0.5), width: 1),
       ),
       child: Row(
         children: [
@@ -214,7 +296,10 @@ class _AddHoldingPageState extends ConsumerState<AddHoldingPage> {
               color: Colors.white,
               borderRadius: BorderRadius.circular(8),
             ),
-            child: const Icon(Icons.business, color: AppColors.darkBackground),
+            child: Image.network(
+              stock.logoUrl,
+              errorBuilder: (_, __, ___) => const Icon(Icons.business, color: Colors.blueGrey, size: 24),
+            ),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -222,7 +307,7 @@ class _AddHoldingPageState extends ConsumerState<AddHoldingPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  _stockName,
+                  stock.name,
                   style: const TextStyle(
                     color: AppColors.darkTextPrimary,
                     fontSize: 15,
@@ -230,7 +315,7 @@ class _AddHoldingPageState extends ConsumerState<AddHoldingPage> {
                   ),
                 ),
                 Text(
-                  '$_stockSymbol • $_selectedExchange',
+                  '${stock.symbol} • $_selectedExchange',
                   style: const TextStyle(
                     color: AppColors.darkTextSecondary,
                     fontSize: 12,
@@ -243,16 +328,16 @@ class _AddHoldingPageState extends ConsumerState<AddHoldingPage> {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                currencyFormat.format(_currentPrice),
+                currencyFormat.format(stock.currentPrice),
                 style: const TextStyle(
                   color: AppColors.darkTextPrimary,
                   fontSize: 15,
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              Text(
-                '+$_priceChange%',
-                style: const TextStyle(
+              const Text(
+                '+0.45%',
+                style: TextStyle(
                   color: AppColors.bullishGreen,
                   fontSize: 12,
                   fontWeight: FontWeight.w500,
@@ -374,13 +459,13 @@ class _AddHoldingPageState extends ConsumerState<AddHoldingPage> {
           const SizedBox(height: 16),
           Row(
             children: [
-              Icon(Icons.info_outline, color: AppColors.darkTextSecondary.withOpacity(0.5), size: 16),
+              Icon(Icons.info_outline, color: AppColors.darkTextSecondary.withValues(alpha: 0.5), size: 16),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   'Charges and taxes will be extra as per broker.',
                   style: TextStyle(
-                    color: AppColors.darkTextSecondary.withOpacity(0.5),
+                    color: AppColors.darkTextSecondary.withValues(alpha: 0.5),
                     fontSize: 12,
                   ),
                 ),
@@ -393,11 +478,11 @@ class _AddHoldingPageState extends ConsumerState<AddHoldingPage> {
   }
 
   Widget _buildAddButton() {
-    final isValid = _totalInvestment > 0;
+    final isValid = _selectedStock != null && _totalInvestment > 0;
     return SizedBox(
       width: double.infinity,
       child: ElevatedButton.icon(
-        onPressed: isValid ? () => context.pop() : null,
+        onPressed: isValid ? _handleAdd : null,
         icon: const Icon(Icons.add_circle),
         label: const Text(
           'Add to Portfolio',
@@ -406,7 +491,7 @@ class _AddHoldingPageState extends ConsumerState<AddHoldingPage> {
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.navActiveColor,
           foregroundColor: Colors.white,
-          disabledBackgroundColor: AppColors.navActiveColor.withOpacity(0.3),
+          disabledBackgroundColor: AppColors.navActiveColor.withValues(alpha: 0.3),
           padding: const EdgeInsets.symmetric(vertical: 16),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         ),

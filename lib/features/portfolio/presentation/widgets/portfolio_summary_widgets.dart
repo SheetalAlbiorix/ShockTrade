@@ -17,7 +17,7 @@ class PortfolioSummaryHeader extends StatelessWidget {
         const Text(
           'TOTAL PORTFOLIO VALUE',
           style: TextStyle(
-            color: AppColors.darkTextSecondary,
+            color: Color(0xFF6B7280),
             fontSize: 12,
             fontWeight: FontWeight.w600,
             letterSpacing: 1.2,
@@ -34,9 +34,9 @@ class PortfolioSummaryHeader extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
           decoration: BoxDecoration(
-            color: (summary.isTotalPositive ? AppColors.bullishGreen : AppColors.bearishRed).withValues(alpha: 0.15),
+            color: (summary.isTotalPositive ? const Color(0xFF0C2B21) : const Color(0xFF2B0C0C)), // Specialized colors
             borderRadius: BorderRadius.circular(20),
           ),
           child: Row(
@@ -47,7 +47,7 @@ class PortfolioSummaryHeader extends StatelessWidget {
                 color: summary.isTotalPositive ? AppColors.bullishGreen : AppColors.bearishRed,
                 size: 16,
               ),
-              const SizedBox(width: 4),
+              const SizedBox(width: 6),
               Text(
                 '${summary.isTotalPositive ? "+" : ""}${currencyFormat.format(summary.totalPnlAmount)} (${summary.totalPnlPercentage.toStringAsFixed(1)}%)',
                 style: TextStyle(
@@ -81,19 +81,21 @@ class PortfolioMetricCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
+      width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.premiumCardBackground,
-        borderRadius: BorderRadius.circular(16),
+        color: const Color(0xFF131A2D),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(color: AppColors.premiumCardBorder, width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
           Text(
             title,
             style: const TextStyle(
-              color: AppColors.darkTextSecondary,
+              color: Color(0xFF6B7280),
               fontSize: 13,
             ),
           ),
