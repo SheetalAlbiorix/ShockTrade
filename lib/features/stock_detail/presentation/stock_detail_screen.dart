@@ -3,12 +3,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shock_app/core/config/app_colors.dart';
 import 'package:shock_app/features/stock_detail/application/stock_detail_controller.dart';
-import 'package:shock_app/features/stock_detail/presentation/widgets/candlestick_chart.dart';
+import 'package:shock_app/features/stock_detail/domain/models.dart';
+import 'package:shock_app/features/stock_detail/presentation/widgets/stock_chart.dart';
 import 'package:shock_app/features/stock_detail/presentation/widgets/glass_card.dart';
-import 'package:shock_app/features/stock_detail/presentation/widgets/market_overview_grid.dart';
+import 'package:shock_app/features/stock_detail/presentation/widgets/markets_today_card.dart';
 import 'package:shock_app/features/stock_detail/presentation/widgets/news_card.dart';
 import 'package:shock_app/features/stock_detail/presentation/widgets/time_filter_tabs.dart';
-import 'package:shock_app/features/stock_detail/presentation/widgets/week_range_indicator.dart';
+import 'package:shock_app/features/stock_detail/presentation/widgets/range_indicator.dart';
+import 'package:shock_app/features/stock_detail/presentation/widgets/risk_meter_widget.dart';
 import 'package:shock_app/features/portfolio/application/providers/portfolio_provider.dart';
 
 /// Stock detail screen with modern HTML-inspired design
@@ -26,6 +28,33 @@ class StockDetailScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(stockDetailControllerProvider(symbol));
     final controller = ref.read(stockDetailControllerProvider(symbol).notifier);
+
+    // Error Listener
+    ref.listen<StockDetailState>(stockDetailControllerProvider(symbol),
+        (previous, next) {
+      if (next.errorMessage != null &&
+          next.errorMessage != previous?.errorMessage) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              next.errorMessage!,
+              style: const TextStyle(color: Colors.white),
+            ),
+            backgroundColor: AppColors.premiumAccentRed,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    });
+
+    if (state.isLoading) {
+      return const Scaffold(
+        backgroundColor: AppColors.darkBackground,
+        body: Center(
+          child: CircularProgressIndicator(color: AppColors.premiumAccentBlue),
+        ),
+      );
+    }
 
     final isPositive = state.priceChange >= 0;
 
@@ -121,68 +150,87 @@ class StockDetailScreen extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Price Section
-                  const Text(
-                    'CURRENT PRICE',
-                    style: TextStyle(
-                      color: AppColors.darkTextSecondary,
-                      fontSize: 10,
-                      fontWeight: FontWeight.w500,
-                      letterSpacing: 1.2,
-                    ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'CURRENT PRICE',
+                        style: TextStyle(
+                          color: AppColors.darkTextSecondary,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w500,
+                          letterSpacing: 1.2,
+                        ),
+                      ),
+                      if (state.riskMeter != null)
+                        RiskMeterWidget(riskMeter: state.riskMeter!),
+                    ],
                   ),
                   const SizedBox(height: 4),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.baseline,
-                    textBaseline: TextBaseline.alphabetic,
-                    children: [
-                      Text(
-                        '₹${state.price.toStringAsFixed(2)}',
-                        style: const TextStyle(
-                          color: AppColors.darkTextPrimary,
-                          fontSize: 36,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: -0.5,
+                  // Price Block
+                  // Price Row
+                  // Price Row
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        // Current Price
+                        Text(
+                          '₹${state.price.toStringAsFixed(2)}',
+                          style: const TextStyle(
+                            color: AppColors.darkTextPrimary,
+                            fontSize: 36,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: -0.5,
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 12),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: isPositive
-                              ? AppColors.bullishGreen.withOpacity(0.1)
-                              : AppColors.bearishRed.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              isPositive
-                                  ? Icons.trending_up
-                                  : Icons.trending_down,
+                        const SizedBox(width: 12),
+
+                        // Change Indicator
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 6.0),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
                               color: isPositive
-                                  ? AppColors.bullishGreen
-                                  : AppColors.bearishRed,
-                              size: 16,
+                                  ? AppColors.bullishGreen.withOpacity(0.1)
+                                  : AppColors.bearishRed.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(6),
                             ),
-                            const SizedBox(width: 4),
-                            Text(
-                              '${isPositive ? '+' : ''}${state.priceChange.toStringAsFixed(2)} (${state.percentChange.toStringAsFixed(2)}%)',
-                              style: TextStyle(
-                                color: isPositive
-                                    ? AppColors.bullishGreen
-                                    : AppColors.bearishRed,
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                              ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  isPositive
+                                      ? Icons.trending_up
+                                      : Icons.trending_down,
+                                  color: isPositive
+                                      ? AppColors.bullishGreen
+                                      : AppColors.bearishRed,
+                                  size: 16,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  '${isPositive ? '+' : ''}${state.priceChange.toStringAsFixed(2)} (${state.percentChange.toStringAsFixed(2)}%)',
+                                  style: TextStyle(
+                                    color: isPositive
+                                        ? AppColors.bullishGreen
+                                        : AppColors.bearishRed,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
                             ),
-                          ],
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                   const SizedBox(height: 4),
                   const Text(
@@ -203,8 +251,13 @@ class StockDetailScreen extends ConsumerWidget {
 
                   const SizedBox(height: 16),
 
-                  // Candlestick Chart
-                  CandlestickChart(chartPoints: state.chartPoints),
+                  // Chart
+                  StockChart(
+                    chartPoints: state.chartPoints,
+                    prevClose: double.tryParse(
+                            state.tradingInfo.prevClose.replaceAll(',', '')) ??
+                        state.price,
+                  ),
 
                   // X-axis labels
                   const Padding(
@@ -234,33 +287,43 @@ class StockDetailScreen extends ConsumerWidget {
 
                   const SizedBox(height: 24),
 
-                  // Market Overview
+                  const SizedBox(height: 16),
+
+                  // Markets Today Card
+                  MarketsTodayCard(
+                    tradingInfo: state.tradingInfo,
+                    currentPrice: state.price,
+                    isPositive: isPositive,
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  // 52 Week Range
                   const Text(
-                    'Market Overview',
+                    '52 Week Range',
                     style: TextStyle(
                       color: AppColors.darkTextPrimary,
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
+                  const SizedBox(height: 12),
+                  Builder(builder: (context) {
+                    final low = double.tryParse(
+                            state.tradingInfo.week52Low.replaceAll(',', '')) ??
+                        0.0;
+                    final high = double.tryParse(
+                            state.tradingInfo.week52High.replaceAll(',', '')) ??
+                        0.0;
 
-                  MarketOverviewGrid(
-                    open: state.tradingInfo.open,
-                    high: state.tradingInfo.high,
-                    low: state.tradingInfo.low,
-                    prevClose: state.tradingInfo.prevClose,
-                    volume: '12.45L',
-                    marketCap: state.fundamentals.marketCap,
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  // 52 Week Range
-                  WeekRangeIndicator(
-                    low: 2000.00,
-                    high: 2800.00,
-                    current: state.price,
-                  ),
+                    return RangeIndicator(
+                      low: low,
+                      high: high,
+                      current: state.price,
+                      lowLabel: '52W Low',
+                      highLabel: '52W High',
+                    );
+                  }),
 
                   const SizedBox(height: 24),
 
@@ -323,18 +386,28 @@ class StockDetailScreen extends ConsumerWidget {
                     ],
                   ),
                   const SizedBox(height: 12),
-                  const NewsCard(
-                    title:
-                        'Reliance Industries to acquire major stake in solar energy startup, boosting green portfolio.',
-                    source: 'Mint',
-                    timeAgo: '1 hour ago',
-                  ),
-                  const NewsCard(
-                    title:
-                        'Sensex, Nifty open higher led by Reliance and IT stocks; global cues positive.',
-                    source: 'Economic Times',
-                    timeAgo: '3 hours ago',
-                  ),
+                  const SizedBox(height: 12),
+                  if (state.news.isEmpty)
+                    const Padding(
+                      padding: EdgeInsets.all(16.0),
+                      child: Text(
+                        'No news available for this stock.',
+                        style: TextStyle(
+                          color: AppColors.darkTextSecondary,
+                          fontSize: 12,
+                        ),
+                      ),
+                    )
+                  else
+                    ...state.news.map((newsItem) => Padding(
+                          padding: const EdgeInsets.only(bottom: 12.0),
+                          child: NewsCard(
+                            title: newsItem.title,
+                            source: newsItem.source,
+                            timeAgo: newsItem.timeAgo,
+                            imageUrl: newsItem.imageUrl,
+                          ),
+                        )),
                 ],
               ),
             ),
