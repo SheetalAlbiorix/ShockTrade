@@ -4,6 +4,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:shock_app/core/config/env.dart';
 import 'package:shock_app/core/services/profile_service.dart';
+import 'package:shock_app/core/services/notification_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class AuthService {
@@ -65,10 +66,7 @@ class AuthService {
       // 4. Start/Restart the Token Refresh Timer
       _startTokenRefreshTimer();
 
-      // 5. Sync Profile to Supabase (Only needed on initial login, but harmless to call here generally,
-      // although somewhat expensive. Should optimization be needed, we can flag if it's a refresh vs login)
-      // For now, we will skip profile sync if it's just a background refresh to save resources,
-      // but simplistic approach is fine. Let's keep it simple.
+      // 5. Sync Profile to Supabase
       try {
         final profileService = ProfileService(_supabaseClient);
         await profileService.syncProfile(
@@ -79,6 +77,14 @@ class AuthService {
         );
       } catch (e) {
         debugPrint("Profile Sync Warning during exchange: $e");
+      }
+
+      // 6. Initialize Notifications & Sync Token
+      try {
+        final notificationService = NotificationService(_supabaseClient);
+        await notificationService.initialize();
+      } catch (e) {
+        debugPrint("Notification Init Warning: $e");
       }
     } catch (e) {
       debugPrint("Token Exchange Failed: $e");
@@ -156,6 +162,15 @@ class AuthService {
   Future<void> signOut() async {
     try {
       _refreshTimer?.cancel(); // Stop the timer logic
+
+      // Delete FCM Token before signing out (Best Effort)
+      try {
+        final notificationService = NotificationService(_supabaseClient);
+        await notificationService.deleteToken();
+      } catch (e) {
+        debugPrint("Delete Token Warning: $e");
+      }
+
       if (_isFirebaseInitialized) {
         await FirebaseAuth.instance.signOut();
       }
