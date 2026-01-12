@@ -1,6 +1,9 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shock_app/core/config/app_colors.dart';
+import 'package:shock_app/core/services/profile_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
@@ -13,15 +16,62 @@ class EditProfilePage extends StatefulWidget {
 }
 
 class _EditProfilePageState extends State<EditProfilePage> {
-  final _nameController = TextEditingController(text: 'Aditya Sharma');
-  final _emailController =
-      TextEditingController(text: 'aditya.sharma@example.com');
-  final _bioController = TextEditingController(
-      text: 'Trader | Investor | Tech Enthusiast. Always learning.');
+  final _nameController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _bioController = TextEditingController();
 
   File? _imageFile;
   final ImagePicker _picker = ImagePicker();
   bool _isLoading = false;
+
+  // To show existing avatar if no new file selected
+  String? _currentAvatarUrl;
+
+  // Track initial values for dirty check (optimization)
+  String? _initialName;
+  String? _initialBio;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserProfile();
+  }
+
+  Future<void> _loadUserProfile() async {
+    setState(() => _isLoading = true);
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        final profileService = ProfileService(Supabase.instance.client);
+        final profile = await profileService.getProfile(user.uid);
+
+        if (profile != null) {
+          _nameController.text = profile['full_name'] ?? user.displayName ?? '';
+          _emailController.text = profile['email'] ?? user.email ?? '';
+          _bioController.text = profile['bio'] ?? '';
+          _currentAvatarUrl = profile['avatar_url'] ?? user.photoURL;
+
+          _initialName = _nameController.text;
+          _initialBio = _bioController.text;
+        } else {
+          // Fallback to Firebase data if profile doesn't exist yet
+          _nameController.text = user.displayName ?? '';
+          _emailController.text = user.email ?? '';
+          _initialName = _nameController.text;
+          _initialBio = '';
+        }
+      }
+    } catch (e) {
+      debugPrint('Error loading profile: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to load profile: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
 
   @override
   void dispose() {
@@ -84,18 +134,68 @@ class _EditProfilePageState extends State<EditProfilePage> {
   }
 
   Future<void> _saveChanges() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
     setState(() => _isLoading = true);
-    // Simulate API call
-    await Future.delayed(const Duration(seconds: 1));
-    if (mounted) {
-      setState(() => _isLoading = false);
-      context.pop();
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Profile updated successfully'),
-          backgroundColor: Colors.green,
-        ),
-      );
+    try {
+      final profileService = ProfileService(Supabase.instance.client);
+      String? uploadedUrl;
+
+      // 1. Upload Image (if changed)
+      if (_imageFile != null) {
+        debugPrint('Uploading new avatar...');
+        uploadedUrl = await profileService.uploadAvatar(_imageFile!, user.uid);
+        debugPrint('Avatar uploaded: $uploadedUrl');
+      }
+
+      // 2. Check for Text Changes
+      final currentName = _nameController.text.trim();
+      final currentBio = _bioController.text.trim();
+
+      String? nameToSend;
+      String? bioToSend;
+
+      if (currentName != _initialName) {
+        nameToSend = currentName;
+      }
+
+      if (currentBio != _initialBio) {
+        bioToSend = currentBio;
+      }
+
+      // 3. Update if anything changed
+      if (uploadedUrl != null || nameToSend != null || bioToSend != null) {
+        await profileService.updateProfile(
+          userId: user.uid,
+          fullName: nameToSend,
+          bio: bioToSend,
+          avatarUrl: uploadedUrl,
+        );
+      } else {
+        debugPrint("No changes detected.");
+      }
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Profile updated successfully'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        context.pop();
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error updating profile: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -140,8 +240,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
                         image: DecorationImage(
                           image: _imageFile != null
                               ? FileImage(_imageFile!) as ImageProvider
-                              : const NetworkImage(
-                                  'https://lh3.googleusercontent.com/aida-public/AB6AXuDBBAnWS59jUq6K0aHWcx6o0E9fBtWrJgKcH8ev2pUQiZtldm9WqFkLKIDcmfrIXnsnGtS1hnA2MGDa5nEPM-lBVoV5qIBsveCNT-caZSc3e5vHNPXOJESP6Osj6GkObFY405_7Uevh00kAlREqoTqYNS_IOQF0wO_0spho5Nkgpp2wgm4SAyuASIU4xhfJd3vwI4QIkZj0oqABUPTu-vhSY9yYH59L6hIAMoxvYWWs-fttdcpK-Jiv_2HmyrneVemzbG2XJsSjQlA',
+                              : NetworkImage(
+                                  _currentAvatarUrl ??
+                                      'https://lh3.googleusercontent.com/aida-public/AB6AXuDBBAnWS59jUq6K0aHWcx6o0E9fBtWrJgKcH8ev2pUQiZtldm9WqFkLKIDcmfrIXnsnGtS1hnA2MGDa5nEPM-lBVoV5qIBsveCNT-caZSc3e5vHNPXOJESP6Osj6GkObFY405_7Uevh00kAlREqoTqYNS_IOQF0wO_0spho5Nkgpp2wgm4SAyuASIU4xhfJd3vwI4QIkZj0oqABUPTu-vhSY9yYH59L6hIAMoxvYWWs-fttdcpK-Jiv_2HmyrneVemzbG2XJsSjQlA',
                                 ),
                           fit: BoxFit.cover,
                         ),
