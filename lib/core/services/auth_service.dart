@@ -1,5 +1,8 @@
+import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
+import 'package:shock_app/core/config/env.dart';
+import 'package:shock_app/core/services/profile_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class AuthService {
@@ -7,7 +10,8 @@ class AuthService {
 
   AuthService(this._supabaseClient);
 
-  /// Exchanges the Firebase ID Token for a Supabase JWT
+  Timer? _refreshTimer;
+
   Future<void> exchangeTokenAndAuthenticate() async {
     try {
       final user = FirebaseAuth.instance.currentUser;
@@ -15,8 +19,8 @@ class AuthService {
         throw Exception("No Firebase user found");
       }
 
-      // 1. Get Firebase ID Token
-      final idToken = await user.getIdToken();
+      // 1. Get Firebase ID Token (forceRefresh: true to ensure fresh token for exchange)
+      final idToken = await user.getIdToken(true);
       if (idToken == null) {
         throw Exception("Failed to get Firebase ID Token");
       }
@@ -26,8 +30,7 @@ class AuthService {
       // 2. Call Edge Function 'exchange-token'
       // We send the Firebase token in the body.
       // We EXPLICITLY set the Authorization header to the Anon Key to satisfy the Supabase Gateway.
-      const anonKey =
-          'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhobG9qeWRhbnlnb2F4d2F3dHBiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc5NTk4MzAsImV4cCI6MjA4MzUzNTgzMH0.cuzRoGNm0xFGbzIK76aYiCw1OB0lSepM3yR8zZS9aA4';
+      final anonKey = Env.supabaseAnonKey;
 
       final response = await _supabaseClient.functions.invoke(
         'exchange-token',
@@ -46,27 +49,55 @@ class AuthService {
       }
 
       final supabaseJwt = data['token'] as String;
-      debugPrint("Received Supabase JWT: $supabaseJwt");
+      debugPrint("Received Supabase JWT (Exchange Success).");
 
       // 3. Set the custom session on the Supabase client
-      // This is crucial: We don't use Supabase Auth to signInWithPassword.
-      // We manually set the accessToken.
-      // NOTE: SupabaseFlutter currently relies on valid sessions.
-      // If we just want to use the client for DB calls with this token,
-      // we might need to recreate the client or use RestClient directly
-      // if headers override isn't persistent.
-
-      // However, usually setting the header globally is the way if we don't have a full session.
-      // But Supabase Client supports `setSession` if we had a refresh token, which we don't here.
-      // Simpler approach for RLS: Add Authorization header to all future requests.
-
       _supabaseClient.headers['Authorization'] = 'Bearer $supabaseJwt';
 
       debugPrint("Supabase Client configured with new JWT.");
+
+      // 4. Start/Restart the Token Refresh Timer
+      _startTokenRefreshTimer();
+
+      // 5. Sync Profile to Supabase (Only needed on initial login, but harmless to call here generally,
+      // although somewhat expensive. Should optimization be needed, we can flag if it's a refresh vs login)
+      // For now, we will skip profile sync if it's just a background refresh to save resources,
+      // but simplistic approach is fine. Let's keep it simple.
+      try {
+        final profileService = ProfileService(_supabaseClient);
+        await profileService.syncProfile(
+          id: user.uid,
+          email: user.email!,
+          fullName: user.displayName,
+          avatarUrl: user.photoURL,
+        );
+      } catch (e) {
+        debugPrint("Profile Sync Warning during exchange: $e");
+      }
     } catch (e) {
       debugPrint("Token Exchange Failed: $e");
+      // If auto-refresh fails, we might want to retry soon?
+      // For now, simple rethrow.
       rethrow;
     }
+  }
+
+  /// Starts a timer to refresh the token proactively before it expires (e.g., every 50 mins).
+  void _startTokenRefreshTimer() {
+    _refreshTimer?.cancel();
+    debugPrint("Starting Session Refresh Timer (50 minutes)...");
+
+    // JWT expires in 60 mins. We refresh at 50 mins to be safe.
+    _refreshTimer = Timer(const Duration(minutes: 50), () async {
+      debugPrint("⏰ Session Refresh Timer Triggered. Refreshing Token...");
+      try {
+        await exchangeTokenAndAuthenticate();
+        debugPrint("✅ Token Refreshed Successfully via Timer.");
+      } catch (e) {
+        debugPrint("❌ Proactive Token Refresh Failed: $e");
+        // Retry logic could go here (e.g. try again in 1 min)
+      }
+    });
   }
 
   /// Restores the session if a user is logged in and verified.
@@ -99,9 +130,21 @@ class AuthService {
     }
   }
 
+  /// Sends a password reset email to the given email address.
+  Future<void> sendPasswordResetEmail(String email) async {
+    try {
+      await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
+      debugPrint("Password reset email sent to $email");
+    } catch (e) {
+      debugPrint("Failed to send password reset email: $e");
+      rethrow;
+    }
+  }
+
   /// Signs out the user from both Firebase and Supabase.
   Future<void> signOut() async {
     try {
+      _refreshTimer?.cancel(); // Stop the timer logic
       await FirebaseAuth.instance.signOut();
       // Clear Supabase Authorization header
       _supabaseClient.headers.remove('Authorization');
