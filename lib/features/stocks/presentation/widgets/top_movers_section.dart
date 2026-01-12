@@ -155,8 +155,8 @@ class _TopMoversSectionState extends ConsumerState<TopMoversSection> {
     String exchange = 'NSE';
 
     return InkWell(
-      onTap: () => context
-          .go('/stock-detail?symbol=${stock.symbol}&name=${stock.companyName}'),
+      onTap: () => context.push(
+          '/stock-detail?symbol=${stock.symbol}&name=${stock.companyName}'),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Row(
