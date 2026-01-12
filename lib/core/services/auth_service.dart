@@ -131,6 +131,17 @@ class AuthService {
     }
   }
 
+  /// Sends a password reset email to the given email address.
+  Future<void> sendPasswordResetEmail(String email) async {
+    try {
+      await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
+      debugPrint("Password reset email sent to $email");
+    } catch (e) {
+      debugPrint("Failed to send password reset email: $e");
+      rethrow;
+    }
+  }
+
   /// Signs out the user from both Firebase and Supabase.
   Future<void> signOut() async {
     try {
