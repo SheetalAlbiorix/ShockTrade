@@ -16,7 +16,9 @@ class QuickActionShortcuts extends StatelessWidget {
           _buildShortcut(context, 'Watchlist', Icons.remove_red_eye_outlined, Colors.purple, onTap: () {
             context.push('/market-news');
           }),
-          _buildShortcut(context, 'Alerts', Icons.notifications_active_outlined, Colors.orange),
+          _buildShortcut(context, 'Alerts', Icons.notifications_active_outlined, Colors.orange, onTap: () {
+            context.push('/alerts');
+          }),
           _buildShortcut(context, 'IPOs', Icons.rocket_launch_outlined, Colors.green),
         ],
       ),
