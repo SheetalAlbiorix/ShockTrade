@@ -1,8 +1,57 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:shock_app/core/config/app_colors.dart';
 
-class ProfileSection extends StatelessWidget {
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:shock_app/core/services/profile_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+class ProfileSection extends StatefulWidget {
   const ProfileSection({super.key});
+
+  @override
+  State<ProfileSection> createState() => _ProfileSectionState();
+}
+
+class _ProfileSectionState extends State<ProfileSection> {
+  String _displayName = 'Loading...';
+  String _email = '';
+  String? _avatarUrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProfile();
+  }
+
+  Future<void> _loadProfile() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      // 1. Set initial data from Firebase Cache (Fast)
+      if (mounted) {
+        setState(() {
+          _displayName = user.displayName ?? 'Trader';
+          _email = user.email ?? '';
+          _avatarUrl = user.photoURL;
+        });
+      }
+
+      // 2. Fetch latest from Supabase (DB Source of Truth)
+      try {
+        final profileService = ProfileService(Supabase.instance.client);
+        final profile = await profileService.getProfile(user.uid);
+        if (profile != null && mounted) {
+          setState(() {
+            _displayName = profile['full_name'] ?? _displayName;
+            _email = profile['email'] ?? _email;
+            _avatarUrl = profile['avatar_url'] ?? _avatarUrl;
+          });
+        }
+      } catch (e) {
+        debugPrint('Error fetching profile in section: $e');
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -23,10 +72,12 @@ class ProfileSection extends StatelessWidget {
                 height: 64,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white.withOpacity(0.1), width: 2),
-                  image: const DecorationImage(
+                  border: Border.all(
+                      color: Colors.white.withOpacity(0.1), width: 2),
+                  image: DecorationImage(
                     image: NetworkImage(
-                      'https://lh3.googleusercontent.com/aida-public/AB6AXuDBBAnWS59jUq6K0aHWcx6o0E9fBtWrJgKcH8ev2pUQiZtldm9WqFkLKIDcmfrIXnsnGtS1hnA2MGDa5nEPM-lBVoV5qIBsveCNT-caZSc3e5vHNPXOJESP6Osj6GkObFY405_7Uevh00kAlREqoTqYNS_IOQF0wO_0spho5Nkgpp2wgm4SAyuASIU4xhfJd3vwI4QIkZj0oqABUPTu-vhSY9yYH59L6hIAMoxvYWWs-fttdcpK-Jiv_2HmyrneVemzbG2XJsSjQlA',
+                      _avatarUrl ??
+                          'https://lh3.googleusercontent.com/aida-public/AB6AXuDBBAnWS59jUq6K0aHWcx6o0E9fBtWrJgKcH8ev2pUQiZtldm9WqFkLKIDcmfrIXnsnGtS1hnA2MGDa5nEPM-lBVoV5qIBsveCNT-caZSc3e5vHNPXOJESP6Osj6GkObFY405_7Uevh00kAlREqoTqYNS_IOQF0wO_0spho5Nkgpp2wgm4SAyuASIU4xhfJd3vwI4QIkZj0oqABUPTu-vhSY9yYH59L6hIAMoxvYWWs-fttdcpK-Jiv_2HmyrneVemzbG2XJsSjQlA',
                     ),
                     fit: BoxFit.cover,
                   ),
@@ -51,7 +102,7 @@ class ProfileSection extends StatelessWidget {
             ],
           ),
           const SizedBox(width: 16),
-          
+
           // Info
           Expanded(
             child: Column(
@@ -59,10 +110,10 @@ class ProfileSection extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    const Flexible(
+                    Flexible(
                       child: Text(
-                        'Aditya Sharma',
-                        style: TextStyle(
+                        _displayName,
+                        style: const TextStyle(
                           color: Colors.white,
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -72,11 +123,13 @@ class ProfileSection extends StatelessWidget {
                     ),
                     const SizedBox(width: 8),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 2),
                       decoration: BoxDecoration(
                         color: AppColors.primaryBlue.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(999),
-                        border: Border.all(color: AppColors.primaryBlue.withOpacity(0.2)),
+                        border: Border.all(
+                            color: AppColors.primaryBlue.withOpacity(0.2)),
                       ),
                       child: const Text(
                         'KYC Verified',
@@ -91,8 +144,8 @@ class ProfileSection extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'aditya.sharma@example.com',
-                  style: TextStyle(
+                  _email,
+                  style: const TextStyle(
                     color: AppColors.darkTextSecondary,
                     fontSize: 14,
                   ),
@@ -101,11 +154,16 @@ class ProfileSection extends StatelessWidget {
               ],
             ),
           ),
-          
+
           // Edit Button
           IconButton(
-            icon: const Icon(Icons.edit_square, color: AppColors.darkTextSecondary),
-            onPressed: () {},
+            icon: const Icon(Icons.edit_square,
+                color: AppColors.darkTextSecondary),
+            onPressed: () async {
+              await context.push('/edit-profile');
+              // Refresh when coming back
+              _loadProfile();
+            },
           ),
         ],
       ),
