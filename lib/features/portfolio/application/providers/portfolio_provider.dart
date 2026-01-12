@@ -1,96 +1,197 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shock_app/core/config/app_colors.dart';
 import 'package:shock_app/features/portfolio/domain/entities/portfolio_models.dart';
+import 'dart:async';
+import 'dart:math';
 
-/// Provider for portfolio summary
+/// Provider for portfolio summary (derived from holdings)
 final portfolioSummaryProvider = Provider<PortfolioSummary>((ref) {
-  return const PortfolioSummary(
-    totalValue: 123456.78,
-    invested: 100000.00,
-    current: 123456.00,
-    gain: 23456.00,
-    dailyChangePercent: 8.9,
-    isPositive: true,
+  final holdings = ref.watch(holdingsProvider);
+  
+  if (holdings.isEmpty) {
+    return const PortfolioSummary(
+      totalValue: 0,
+      investedValue: 0,
+      dayPnlAmount: 0,
+      dayPnlPercentage: 0,
+      totalPnlAmount: 0,
+      totalPnlPercentage: 0,
+    );
+  }
+
+  double totalValue = 0;
+  double investedValue = 0;
+  double totalPnl = 0;
+  
+  for (var h in holdings) {
+    totalValue += h.currentValue;
+    investedValue += h.investedValue;
+    totalPnl += h.pnlAmount;
+  }
+
+  final totalPnlPercent = investedValue != 0 ? (totalPnl / investedValue) * 100 : 0.0;
+  
+  // Dynamic day P&L: simulated as a small portion of total value for mock feel
+  // In a real app, this would be sum(holding.currentPrice - holding.previousClose) * quantity
+  final dayPnl = totalValue * 0.041; // Simulating 4.1% day gain as seen in screenshots
+  final dayPnlPercent = totalValue != 0 ? (dayPnl / totalValue) * 100 : 0.0;
+
+  return PortfolioSummary(
+    totalValue: totalValue,
+    investedValue: investedValue,
+    dayPnlAmount: dayPnl,
+    dayPnlPercentage: dayPnlPercent,
+    totalPnlAmount: totalPnl,
+    totalPnlPercentage: totalPnlPercent,
   );
 });
 
-/// Provider for asset distribution
-final assetDistributionProvider = Provider<List<AssetCategory>>((ref) {
-  return [
-    AssetCategory(
-      name: 'Tech',
-      value: 55000,
-      percentage: 45,
-      color: AppColors.navActiveColor,
+/// Notifier for managing holdings
+class HoldingsNotifier extends StateNotifier<List<Holding>> {
+  Timer? _timer;
+  final _random = Random();
+
+  HoldingsNotifier() : super(_initialHoldings) {
+    _startPriceSimulation();
+  }
+
+  void _startPriceSimulation() {
+    _timer?.cancel();
+    _timer = Timer.periodic(const Duration(seconds: 5), (timer) {
+      if (state.isEmpty) return;
+      
+      state = [
+        for (final h in state)
+          h.copyWith(
+            currentPrice: h.currentPrice * (1 + (_random.nextDouble() * 0.002 - 0.001)), // +/- 0.1% fluctuation
+          )
+      ];
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  static final List<Holding> _initialHoldings = [
+    Holding.mock(
+      id: '1',
+      symbol: 'HDFCBANK',
+      name: 'HDFC Bank',
+      logoUrl: 'https://logo.clearbit.com/hdfcbank.com',
+      quantity: 50,
+      avgPrice: 1500,
+      currentPrice: 1650,
+      purchaseDate: DateTime.now().subtract(const Duration(days: 30)),
     ),
-    AssetCategory(
-      name: 'Healthcare',
-      value: 30000,
-      percentage: 25,
-      color: AppColors.chartPurple,
+    Holding.mock(
+      id: '2',
+      symbol: 'TATAMOTORS',
+      name: 'Tata Motors',
+      logoUrl: 'https://logo.clearbit.com/tatamotors.com',
+      quantity: 100,
+      avgPrice: 950,
+      currentPrice: 937.5,
+      purchaseDate: DateTime.now().subtract(const Duration(days: 15)),
     ),
-    AssetCategory(
-      name: 'Finance',
-      value: 24000,
-      percentage: 20,
-      color: AppColors.chartOrange,
+    Holding.mock(
+      id: '3',
+      symbol: 'RELIANCE',
+      name: 'Reliance Ind.',
+      logoUrl: 'https://logo.clearbit.com/reliance.com',
+      quantity: 45,
+      avgPrice: 2400,
+      currentPrice: 2742.22,
+      purchaseDate: DateTime.now().subtract(const Duration(days: 60)),
     ),
-    AssetCategory(
-      name: 'Energy',
-      value: 12000,
-      percentage: 10,
-      color: AppColors.bullishGreen,
-    ),
+  ];
+
+  void addHolding(Holding holding) {
+    state = [...state, holding];
+  }
+
+  void updateHolding(String id, double quantity, double avgPrice, DateTime purchaseDate) {
+    state = [
+      for (final h in state)
+        if (h.id == id)
+          h.copyWith(quantity: quantity, avgPrice: avgPrice, purchaseDate: purchaseDate)
+        else
+          h,
+    ];
+  }
+
+  void deleteHolding(String id) {
+    state = state.where((h) => h.id != id).toList();
+  }
+}
+
+final holdingsProvider = StateNotifierProvider<HoldingsNotifier, List<Holding>>((ref) {
+  return HoldingsNotifier();
+});
+
+/// Provider for chart data (now includes mock points)
+final portfolioChartDataProvider = Provider<List<ChartDataPoint>>((ref) {
+  return const [
+    ChartDataPoint(0, 10),
+    ChartDataPoint(1, 14),
+    ChartDataPoint(2, 12),
+    ChartDataPoint(3, 18),
+    ChartDataPoint(4, 16),
+    ChartDataPoint(5, 22),
+    ChartDataPoint(6, 26),
+    ChartDataPoint(7, 24),
+    ChartDataPoint(8, 30),
+    ChartDataPoint(9, 32),
   ];
 });
 
-/// Provider for holdings list
-final holdingsProvider = Provider<List<Holding>>((ref) {
-  return [
-    Holding.create(
-      symbol: 'AAPL',
-      name: 'Apple Inc.',
-      investedValue: 15000.00,
-      shares: 75,
-      changePercent: 2.50,
-    ),
-    Holding.create(
-      symbol: 'GOOGL',
-      name: 'Alphabet Inc.',
-      investedValue: 25000.00,
-      shares: 20,
-      changePercent: -1.20,
-    ),
-    Holding.create(
-      symbol: 'MSFT',
-      name: 'Microsoft Corp.',
-      investedValue: 10000.00,
-      shares: 30,
-      changePercent: 0.80,
-    ),
-    Holding.create(
-      symbol: 'AMZN',
-      name: 'Amazon.com Inc.',
-      investedValue: 30000.00,
-      shares: 25,
-      changePercent: 4.10,
-    ),
-    Holding.create(
-      symbol: 'TSLA',
-      name: 'Tesla Inc.',
-      investedValue: 12000.00,
-      shares: 5,
-      changePercent: -3.50,
-    ),
-    Holding.create(
-      symbol: 'NVDA',
-      name: 'NVIDIA Corp.',
-      investedValue: 8000.00,
-      shares: 10,
-      changePercent: 1.90,
-    ),
-  ];
+/// Provider for best performer
+final bestPerformerProvider = Provider<Holding?>((ref) {
+  final holdings = ref.watch(holdingsProvider);
+  if (holdings.isEmpty) return null;
+  return holdings.reduce((curr, next) => curr.pnlPercentage > next.pnlPercentage ? curr : next);
 });
 
-/// Provider for loading state
-final portfolioLoadingProvider = StateProvider<bool>((ref) => false);
+/// Search logic for stocks
+class StockSuggestion {
+  final String symbol;
+  final String name;
+  final String logoUrl;
+  final double currentPrice;
+
+  StockSuggestion(this.symbol, this.name, this.logoUrl, this.currentPrice);
+}
+
+final stockSearchQueryProvider = StateProvider<String>((ref) => '');
+
+final stockSearchProvider = Provider<List<StockSuggestion>>((ref) {
+  final query = ref.watch(stockSearchQueryProvider).toUpperCase();
+  if (query.isEmpty) return [];
+
+  final allStocks = [
+    StockSuggestion('HDFCBANK', 'HDFC Bank Ltd', 'https://logo.clearbit.com/hdfcbank.com', 1650.45),
+    StockSuggestion('RELIANCE', 'Reliance Industries', 'https://logo.clearbit.com/reliance.com', 2742.22),
+    StockSuggestion('TATAMOTORS', 'Tata Motors Ltd', 'https://logo.clearbit.com/tatamotors.com', 937.50),
+    StockSuggestion('INFY', 'Infosys Ltd', 'https://logo.clearbit.com/infosys.com', 1540.20),
+    StockSuggestion('TCS', 'Tata Consultancy Services', 'https://logo.clearbit.com/tcs.com', 3850.15),
+    StockSuggestion('ICICIBANK', 'ICICI Bank Ltd', 'https://logo.clearbit.com/icicibank.com', 1080.40),
+    StockSuggestion('SBI', 'State Bank of India', 'https://logo.clearbit.com/sbi.co.in', 760.30),
+    StockSuggestion('WIPRO', 'Wipro Ltd', 'https://logo.clearbit.com/wipro.com', 480.10),
+    StockSuggestion('ADANIENT', 'Adani Enterprises Ltd', 'https://logo.clearbit.com/adani.com', 3200.75),
+    StockSuggestion('ZOMATO', 'Zomato Ltd', 'https://logo.clearbit.com/zomato.com', 185.20),
+  ];
+
+  return allStocks.where((s) => s.symbol.contains(query) || s.name.toUpperCase().contains(query)).toList();
+});
+
+/// UI States
+final isEmptyPortfolioProvider = StateProvider<bool>((ref) => false);
+final selectedTimeRangeProvider = StateProvider<String>((ref) => '1Y');
+final selectedAssetTypeProvider = StateProvider<String>((ref) => 'Equity');
+final selectedHoldingsTabProvider = StateProvider<String>((ref) => 'All');
+
+/// Sorting options for holdings
+enum PortfolioSortOption { value, pnl, name, quantity }
+
+final portfolioSortProvider = StateProvider<PortfolioSortOption>((ref) => PortfolioSortOption.value);
