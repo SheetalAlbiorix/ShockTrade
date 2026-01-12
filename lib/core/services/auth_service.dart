@@ -98,4 +98,19 @@ class AuthService {
       return 2;
     }
   }
+
+  /// Signs out the user from both Firebase and Supabase.
+  Future<void> signOut() async {
+    try {
+      await FirebaseAuth.instance.signOut();
+      // Clear Supabase Authorization header
+      _supabaseClient.headers.remove('Authorization');
+      // Optionally clear full session if we were using it, but we are using manual headers.
+      // If we move to full Supabase Auth later, use _supabaseClient.auth.signOut();
+      debugPrint("User signed out successfully.");
+    } catch (e) {
+      debugPrint("Sign out failed: $e");
+      rethrow;
+    }
+  }
 }
