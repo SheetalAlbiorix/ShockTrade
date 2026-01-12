@@ -3,22 +3,30 @@ import 'package:shock_app/core/config/app_colors.dart';
 import 'package:shock_app/features/stock_detail/presentation/widgets/glass_card.dart';
 
 /// 52-week range indicator with progress bar
-class WeekRangeIndicator extends StatelessWidget {
+/// Range indicator with progress bar (Day Range, 52 Week Range)
+class RangeIndicator extends StatelessWidget {
   final double low;
   final double high;
   final double current;
+  final String lowLabel;
+  final String highLabel;
 
-  const WeekRangeIndicator({
+  const RangeIndicator({
     super.key,
     required this.low,
     required this.high,
     required this.current,
+    this.lowLabel = 'Low',
+    this.highLabel = 'High',
   });
 
   @override
   Widget build(BuildContext context) {
     // Calculate position percentage (0-1)
-    final position = (current - low) / (high - low);
+    double position = 0.0;
+    if (high > low) {
+      position = (current - low) / (high - low);
+    }
     final clampedPosition = position.clamp(0.0, 1.0);
 
     return GlassCard(
@@ -32,9 +40,9 @@ class WeekRangeIndicator extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    '52W Low',
-                    style: TextStyle(
+                  Text(
+                    lowLabel,
+                    style: const TextStyle(
                       color: AppColors.darkTextSecondary,
                       fontSize: 10,
                       fontWeight: FontWeight.w500,
@@ -54,9 +62,9 @@ class WeekRangeIndicator extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  const Text(
-                    '52W High',
-                    style: TextStyle(
+                  Text(
+                    highLabel,
+                    style: const TextStyle(
                       color: AppColors.darkTextSecondary,
                       fontSize: 10,
                       fontWeight: FontWeight.w500,
