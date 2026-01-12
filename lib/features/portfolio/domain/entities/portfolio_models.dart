@@ -4,86 +4,79 @@ import 'package:flutter/material.dart';
 class Holding {
   final String symbol;
   final String name;
-  final double investedValue;
-  final int shares;
-  final double changePercent;
+  final String logoUrl;
+  final double quantity;
+  final double avgPrice;
+  final double currentPrice;
+  final double pnlAmount;
+  final double pnlPercentage;
   final bool isPositive;
 
   const Holding({
     required this.symbol,
     required this.name,
-    required this.investedValue,
-    required this.shares,
-    required this.changePercent,
+    required this.logoUrl,
+    required this.quantity,
+    required this.avgPrice,
+    required this.currentPrice,
+    required this.pnlAmount,
+    required this.pnlPercentage,
     required this.isPositive,
   });
 
-  factory Holding.create({
+  double get currentValue => quantity * currentPrice;
+  double get investedValue => quantity * avgPrice;
+
+  factory Holding.mock({
     required String symbol,
     required String name,
-    required double investedValue,
-    required int shares,
-    required double changePercent,
+    required String logoUrl,
+    required double quantity,
+    required double avgPrice,
+    required double currentPrice,
   }) {
+    final pnlAmount = (currentPrice - avgPrice) * quantity;
+    final pnlPercentage = ((currentPrice - avgPrice) / avgPrice) * 100;
     return Holding(
       symbol: symbol,
       name: name,
-      investedValue: investedValue,
-      shares: shares,
-      changePercent: changePercent,
-      isPositive: changePercent >= 0,
+      logoUrl: logoUrl,
+      quantity: quantity,
+      avgPrice: avgPrice,
+      currentPrice: currentPrice,
+      pnlAmount: pnlAmount,
+      pnlPercentage: pnlPercentage,
+      isPositive: pnlAmount >= 0,
     );
   }
-}
-
-/// Represents an asset category for the donut chart
-class AssetCategory {
-  final String name;
-  final double value;
-  final double percentage;
-  final Color color;
-
-  const AssetCategory({
-    required this.name,
-    required this.value,
-    required this.percentage,
-    required this.color,
-  });
 }
 
 /// Portfolio summary containing overall metrics
 class PortfolioSummary {
   final double totalValue;
-  final double invested;
-  final double current;
-  final double gain;
-  final double dailyChangePercent;
-  final bool isPositive;
+  final double investedValue;
+  final double dayPnlAmount;
+  final double dayPnlPercentage;
+  final double totalPnlAmount;
+  final double totalPnlPercentage;
 
   const PortfolioSummary({
     required this.totalValue,
-    required this.invested,
-    required this.current,
-    required this.gain,
-    required this.dailyChangePercent,
-    required this.isPositive,
+    required this.investedValue,
+    required this.dayPnlAmount,
+    required this.dayPnlPercentage,
+    required this.totalPnlAmount,
+    required this.totalPnlPercentage,
   });
 
-  String get formattedTotalValue => '\$${_formatNumber(totalValue)}';
-  String get formattedInvested => '\$${_formatNumber(invested)}';
-  String get formattedCurrent => '\$${_formatNumber(current)}';
-  String get formattedGain => '\$${_formatNumber(gain)}';
-  String get formattedDailyChange => '${isPositive ? "+" : ""}${dailyChangePercent.toStringAsFixed(1)}%';
+  bool get isDayPositive => dayPnlAmount >= 0;
+  bool get isTotalPositive => totalPnlAmount >= 0;
+}
 
-  String _formatNumber(double value) {
-    if (value >= 1000000) {
-      return '${(value / 1000000).toStringAsFixed(2)}M';
-    } else if (value >= 1000) {
-      return value.toStringAsFixed(2).replaceAllMapped(
-            RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-            (Match m) => '${m[1]},',
-          );
-    }
-    return value.toStringAsFixed(2);
-  }
+/// Chart data point
+class ChartDataPoint {
+  final double x;
+  final double y;
+
+  const ChartDataPoint(this.x, this.y);
 }

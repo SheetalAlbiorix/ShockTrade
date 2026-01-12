@@ -15,6 +15,7 @@ import 'package:shock_app/features/search/presentation/pages/trending_stocks_pag
 import 'package:shock_app/features/news/presentation/pages/news_page.dart';
 import 'package:shock_app/features/alerts/presentation/pages/alerts_page.dart';
 import 'package:shock_app/features/account/presentation/pages/edit_profile_page.dart';
+import 'package:shock_app/features/portfolio/presentation/pages/add_holding_page.dart';
 
 /// Application router configuration using GoRouter
 final appRouter = GoRouter(
@@ -111,6 +112,11 @@ final appRouter = GoRouter(
       path: '/edit-profile',
       name: 'edit-profile',
       builder: (context, state) => const EditProfilePage(),
+    ),
+    GoRoute(
+      path: '/portfolio-add-holding',
+      name: 'portfolio-add-holding',
+      builder: (context, state) => const AddHoldingPage(),
     ),
   ],
 );
