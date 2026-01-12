@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:shock_app/core/config/env.dart';
 import 'package:shock_app/core/services/profile_service.dart';
@@ -11,9 +12,14 @@ class AuthService {
   AuthService(this._supabaseClient);
 
   Timer? _refreshTimer;
+  bool get _isFirebaseInitialized => Firebase.apps.isNotEmpty;
 
+  /// Exchanges the Firebase ID Token for a Supabase JWT
   Future<void> exchangeTokenAndAuthenticate() async {
     try {
+      if (!_isFirebaseInitialized) {
+        throw Exception("Firebase not initialized");
+      }
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) {
         throw Exception("No Firebase user found");
@@ -110,6 +116,11 @@ class AuthService {
   /// 2: Unauthenticated -> Onboarding
   Future<int> restoreSession() async {
     try {
+      if (!_isFirebaseInitialized) {
+        debugPrint(
+            "Firebase not initialized. Skipping session restoration. Defaulting to logged out.");
+        return 2;
+      }
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) {
         return 2;
@@ -145,7 +156,9 @@ class AuthService {
   Future<void> signOut() async {
     try {
       _refreshTimer?.cancel(); // Stop the timer logic
-      await FirebaseAuth.instance.signOut();
+      if (_isFirebaseInitialized) {
+        await FirebaseAuth.instance.signOut();
+      }
       // Clear Supabase Authorization header
       _supabaseClient.headers.remove('Authorization');
       // Optionally clear full session if we were using it, but we are using manual headers.

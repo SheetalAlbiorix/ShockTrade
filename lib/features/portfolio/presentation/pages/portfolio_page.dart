@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:shock_app/core/config/app_colors.dart';
 import 'package:shock_app/core/config/app_strings.dart';
 import 'package:shock_app/features/portfolio/application/providers/portfolio_provider.dart';
@@ -323,13 +324,6 @@ class PortfolioPage extends ConsumerWidget {
   }
 
   void _showHoldingDetails(BuildContext context, dynamic holding) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('${holding.symbol} details - Coming soon!'),
-        backgroundColor: AppColors.darkSurface,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-      ),
-    );
+    context.push('/stock-detail?symbol=${holding.symbol}&name=${holding.name}');
   }
 }
