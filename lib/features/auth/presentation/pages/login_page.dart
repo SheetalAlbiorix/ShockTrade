@@ -38,6 +38,20 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     });
 
     try {
+      if (Firebase.apps.isEmpty) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+                content: Text(
+                    'Firebase is not configured. Authentication is disabled.')),
+          );
+        }
+        setState(() {
+          _isLoading = false;
+        });
+        return;
+      }
+
       final userCredential =
           await FirebaseAuth.instance.signInWithEmailAndPassword(
         email: _emailController.text.trim(),

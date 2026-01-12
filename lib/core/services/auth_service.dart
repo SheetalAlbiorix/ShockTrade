@@ -7,9 +7,14 @@ class AuthService {
 
   AuthService(this._supabaseClient);
 
+  bool get _isFirebaseInitialized => Firebase.apps.isNotEmpty;
+
   /// Exchanges the Firebase ID Token for a Supabase JWT
   Future<void> exchangeTokenAndAuthenticate() async {
     try {
+      if (!_isFirebaseInitialized) {
+        throw Exception("Firebase not initialized");
+      }
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) {
         throw Exception("No Firebase user found");
@@ -79,6 +84,11 @@ class AuthService {
   /// 2: Unauthenticated -> Onboarding
   Future<int> restoreSession() async {
     try {
+      if (!_isFirebaseInitialized) {
+        debugPrint(
+            "Firebase not initialized. Skipping session restoration. Defaulting to logged out.");
+        return 2;
+      }
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) {
         return 2;
@@ -102,7 +112,9 @@ class AuthService {
   /// Signs out the user from both Firebase and Supabase.
   Future<void> signOut() async {
     try {
-      await FirebaseAuth.instance.signOut();
+      if (_isFirebaseInitialized) {
+        await FirebaseAuth.instance.signOut();
+      }
       // Clear Supabase Authorization header
       _supabaseClient.headers.remove('Authorization');
       // Optionally clear full session if we were using it, but we are using manual headers.
