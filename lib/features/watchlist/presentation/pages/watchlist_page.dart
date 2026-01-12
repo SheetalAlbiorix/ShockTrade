@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:shock_app/core/config/app_colors.dart';
 import 'package:shock_app/features/watchlist/application/providers/watchlist_provider.dart';
 import 'package:shock_app/features/watchlist/domain/entities/watchlist_models.dart';
@@ -292,7 +293,10 @@ class _WatchlistPageState extends ConsumerState<WatchlistPage> {
                          // Wrap with container to add spacing if needed, though ReorderableListView handles it.
                          // StockListCard likely has padding.
                          margin: const EdgeInsets.only(bottom: 12),
-                         child: WatchlistStockCard(stock: stock), // Reusing existing card widget
+                         child: WatchlistStockCard(
+                           stock: stock,
+                           onTap: () => context.push('/stock-detail?symbol=${stock.symbol}&name=${stock.name}'),
+                         ),
                       ),
                     );
                   },

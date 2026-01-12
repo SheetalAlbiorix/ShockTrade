@@ -112,7 +112,7 @@ class _TopMoversSectionState extends State<TopMoversSection> {
 
   Widget _buildStockItem(String name, String exchange, String price, String change, bool isPositive, String logoUrl) {
     return InkWell(
-      onTap: () => context.go('/stock-detail?symbol=$name&name=$name'),
+      onTap: () => context.push('/stock-detail?symbol=$name&name=$name'),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Row(

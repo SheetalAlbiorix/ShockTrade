@@ -1,41 +1,62 @@
 import 'package:flutter/material.dart';
 import 'package:shock_app/core/config/app_colors.dart';
+import 'dart:async';
 
-class WatchlistSearchBar extends StatefulWidget {
+class StickySearchBar extends StatefulWidget {
   final ValueChanged<String>? onChanged;
 
-  const WatchlistSearchBar({
-    super.key,
-    this.onChanged,
-  });
+  const StickySearchBar({super.key, this.onChanged});
 
   @override
-  State<WatchlistSearchBar> createState() => _WatchlistSearchBarState();
+  State<StickySearchBar> createState() => _StickySearchBarState();
 }
 
-class _WatchlistSearchBarState extends State<WatchlistSearchBar> {
+class _StickySearchBarState extends State<StickySearchBar> {
   final TextEditingController _controller = TextEditingController();
-  final ValueNotifier<bool> _showClear = ValueNotifier(false);
+  Timer? _debounce;
+  final FocusNode _focusNode = FocusNode();
+  final ValueNotifier<bool> _hasText = ValueNotifier<bool>(false);
 
   @override
   void initState() {
     super.initState();
+    // Auto-focus when screen opens as per requirements
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _focusNode.requestFocus();
+    });
+    
+    // Listen to text changes to show/hide clear button
     _controller.addListener(() {
-      _showClear.value = _controller.text.isNotEmpty;
+      _hasText.value = _controller.text.isNotEmpty;
     });
   }
 
   @override
   void dispose() {
     _controller.dispose();
-    _showClear.dispose();
+    _debounce?.cancel();
+    _focusNode.dispose();
+    _hasText.dispose();
     super.dispose();
+  }
+
+  void _onSearchChanged(String query) {
+    if (_debounce?.isActive ?? false) _debounce!.cancel();
+    _debounce = Timer(const Duration(milliseconds: 300), () {
+      widget.onChanged?.call(query);
+    });
+  }
+
+  void _clearSearch() {
+    _controller.clear();
+    widget.onChanged?.call('');
+    _focusNode.requestFocus();
   }
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.symmetric(vertical: 8),
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
         color: AppColors.premiumSurface,
         borderRadius: BorderRadius.circular(16),
@@ -49,17 +70,18 @@ class _WatchlistSearchBarState extends State<WatchlistSearchBar> {
         ],
       ),
       child: ValueListenableBuilder<bool>(
-        valueListenable: _showClear,
-        builder: (context, hasText, _) {
+        valueListenable: _hasText,
+        builder: (context, hasText, child) {
           return TextField(
             controller: _controller,
-            onChanged: widget.onChanged,
+            focusNode: _focusNode,
+            onChanged: _onSearchChanged,
             style: const TextStyle(
               color: AppColors.darkTextPrimary,
               fontSize: 16,
             ),
             decoration: InputDecoration(
-              hintText: 'Search stocks (e.g., RELIANCE, TCS)',
+              hintText: 'Search for Reliance, Tata Motors…',
               hintStyle: TextStyle(
                 color: AppColors.darkTextSecondary.withOpacity(0.7),
                 fontSize: 15,
@@ -75,10 +97,7 @@ class _WatchlistSearchBarState extends State<WatchlistSearchBar> {
                         color: AppColors.darkTextSecondary,
                         size: 20,
                       ),
-                      onPressed: () {
-                        _controller.clear();
-                        widget.onChanged?.call('');
-                      },
+                      onPressed: _clearSearch,
                     )
                   : null,
               border: InputBorder.none,
