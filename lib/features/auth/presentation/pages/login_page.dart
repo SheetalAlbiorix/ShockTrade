@@ -48,7 +48,23 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
       debugPrint('FIREBASE ID TOKEN: $idToken');
 
-      // Exchange for Supabase Token
+      // Check Email Verification
+      final isVerified = userCredential.user?.emailVerified ?? false;
+      if (!isVerified) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Please verify your email address.')),
+          );
+
+          // Optionally send verification here if you want:
+          // await userCredential.user?.sendEmailVerification();
+
+          context.go('/verify-email');
+        }
+        return; // Stop here
+      }
+
+      // Verification Passed: Exchange for Supabase Token
       if (mounted) {
         try {
           final authService = AuthService(Supabase.instance.client);
@@ -88,14 +104,12 @@ class _LoginPageState extends ConsumerState<LoginPage> {
             final idToken = await userCredential.user?.getIdToken();
             debugPrint('FIREBASE ID TOKEN (NEW USER): $idToken');
 
-            // Exchange for Supabase Token
-            if (mounted) {
-              final authService = AuthService(Supabase.instance.client);
-              await authService.exchangeTokenAndAuthenticate();
+            // NOTE: New users are NOT verified by default.
+            // Send verification email
+            await userCredential.user?.sendEmailVerification();
 
-              if (mounted) {
-                context.go('/home');
-              }
+            if (mounted) {
+              context.go('/verify-email');
             }
             return;
           } catch (regError) {

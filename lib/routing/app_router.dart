@@ -5,6 +5,7 @@ import 'package:shock_app/features/auth/presentation/pages/login_page.dart';
 import 'package:shock_app/features/splash/presentation/pages/splash_page.dart';
 import 'package:shock_app/features/onboarding/presentation/pages/onboarding_page.dart';
 import 'package:shock_app/features/auth/presentation/pages/register_page.dart';
+import 'package:shock_app/features/auth/presentation/pages/verify_email_page.dart';
 import 'package:shock_app/features/auth/presentation/pages/forgot_password_page.dart';
 import 'package:shock_app/features/stock_detail/presentation/stock_detail_screen.dart';
 import 'package:shock_app/features/ai_chat/presentation/pages/ai_chat_screen.dart';
@@ -39,6 +40,11 @@ final appRouter = GoRouter(
       path: '/register',
       name: 'register',
       builder: (context, state) => const RegisterPage(),
+    ),
+    GoRoute(
+      path: '/verify-email',
+      name: 'verify-email',
+      builder: (context, state) => const VerifyEmailPage(),
     ),
     GoRoute(
       path: '/forgot-password',
