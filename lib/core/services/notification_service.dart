@@ -1,10 +1,20 @@
 import 'dart:io';
 
 import 'package:device_info_plus/device_info_plus.dart';
+import 'package:firebase_core/firebase_core.dart'; // Required for background handler
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
-import 'package:shock_app/core/config/env.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+
 import 'package:supabase_flutter/supabase_flutter.dart';
+
+@pragma('vm:entry-point')
+Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  // If you're going to use other Firebase services in the background, such as Firestore,
+  // make sure you call `initializeApp` before using other Firebase services.
+  await Firebase.initializeApp();
+  debugPrint("Handling a background message: ${message.messageId}");
+}
 
 class NotificationService {
   final SupabaseClient _supabaseClient;
@@ -32,25 +42,75 @@ class NotificationService {
         // But usually we respect this.
       }
 
-      // 2. Get Initial Token and Sync
+      // 2. Setup Local Notifications (Android Foreground)
+      const AndroidNotificationChannel channel = AndroidNotificationChannel(
+        'high_importance_channel', // id
+        'High Importance Notifications', // title
+        description:
+            'This channel is used for important notifications.', // description
+        importance: Importance.max,
+      );
+
+      final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+          FlutterLocalNotificationsPlugin();
+
+      await flutterLocalNotificationsPlugin
+          .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin>()
+          ?.createNotificationChannel(channel);
+
+      // Initialize
+      await flutterLocalNotificationsPlugin.initialize(
+        const InitializationSettings(
+          android: AndroidInitializationSettings('@mipmap/ic_launcher'),
+          iOS: DarwinInitializationSettings(),
+        ),
+      );
+
+      // 3. Apple Foreground Options
+      await _messaging.setForegroundNotificationPresentationOptions(
+        alert: true,
+        badge: true,
+        sound: true,
+      );
+
+      // 4. Get Initial Token and Sync
       final token = await _messaging.getToken();
       if (token != null) {
         debugPrint('FCM Token: $token');
         await _syncToken(token);
       }
 
-      // 3. Listen for Token Refresh
+      // 5. Listen for Token Refresh
       _messaging.onTokenRefresh.listen((newToken) {
         debugPrint('FCM Token Refreshed: $newToken');
         _syncToken(newToken);
       });
 
-      // 4. Handle Foreground Messages (Optional for now)
+      // 6. Handle Foreground Messages
       FirebaseMessaging.onMessage.listen((RemoteMessage message) {
         debugPrint('Got a message whilst in the foreground!');
-        if (message.notification != null) {
-          debugPrint(
-              'Message also contained a notification: ${message.notification}');
+
+        // Show Local Notification
+        RemoteNotification? notification = message.notification;
+        AndroidNotification? android = message.notification?.android;
+
+        if (notification != null && android != null) {
+          flutterLocalNotificationsPlugin.show(
+            notification.hashCode,
+            notification.title,
+            notification.body,
+            NotificationDetails(
+              android: AndroidNotificationDetails(
+                channel.id,
+                channel.name,
+                channelDescription: channel.description,
+                icon: android.smallIcon, // Use @mipmap/ic_launcher if null?
+                // other properties...
+              ),
+              iOS: const DarwinNotificationDetails(),
+            ),
+          );
         }
       });
     } catch (e) {
