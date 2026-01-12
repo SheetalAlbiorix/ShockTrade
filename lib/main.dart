@@ -10,7 +10,13 @@ import 'package:shock_app/routing/app_router.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
+  try {
+    await Firebase.initializeApp();
+    debugPrint('Firebase initialized successfully');
+  } catch (e) {
+    debugPrint('Firebase initialization failed: $e');
+    debugPrint('Note: Authentication features will be disabled until Firebase is configured.');
+  }
 
   await Supabase.initialize(
     url: 'https://hhlojydanygoaxwawtpb.supabase.co',
