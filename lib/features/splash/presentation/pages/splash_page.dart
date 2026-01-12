@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shock_app/core/config/app_colors.dart';
+import 'package:shock_app/core/services/auth_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class SplashPage extends StatefulWidget {
   const SplashPage({super.key});
@@ -10,6 +12,70 @@ class SplashPage extends StatefulWidget {
 }
 
 class _SplashPageState extends State<SplashPage> {
+  bool _animationCompleted = false;
+  int? _authState;
+  bool _navigated = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _startAuthCheck();
+  }
+
+  Future<void> _startAuthCheck() async {
+    try {
+      final state =
+          await AuthService(Supabase.instance.client).restoreSession();
+      if (mounted) {
+        setState(() {
+          _authState = state;
+        });
+        _checkNavigation();
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _authState = 2; // Treat error as logged out
+        });
+        _checkNavigation();
+      }
+    }
+  }
+
+  void _onAnimationEnd() {
+    if (mounted) {
+      setState(() {
+        _animationCompleted = true;
+      });
+      _checkNavigation();
+    }
+  }
+
+  void _checkNavigation() {
+    if (_navigated) return;
+    if (_authState == null) return; // Still waiting for auth
+
+    // Case 1: Logged In or Needs Verification -> Navigate Immediately
+    if (_authState == 0 || _authState == 1) {
+      _navigated = true;
+      if (_authState == 0) {
+        context.go('/home');
+      } else {
+        context.go('/verify-email');
+      }
+      return;
+    }
+
+    // Case 2: Logged Out -> Wait for Animation
+    if (_authState == 2) {
+      if (_animationCompleted) {
+        _navigated = true;
+        context.go('/onboarding');
+      }
+      // Else: Wait for animation to finish
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -89,9 +155,7 @@ class _SplashPageState extends State<SplashPage> {
                       minHeight: 4,
                     );
                   },
-                  onEnd: () {
-                    context.goNamed('onboarding');
-                  },
+                  onEnd: _onAnimationEnd,
                 ),
               ),
             ),

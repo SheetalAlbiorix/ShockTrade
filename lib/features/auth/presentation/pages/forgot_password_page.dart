@@ -1,6 +1,9 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shock_app/core/services/auth_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class ForgotPasswordPage extends ConsumerStatefulWidget {
   const ForgotPasswordPage({super.key});
@@ -24,17 +27,69 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
   static const Color subTextColor = Color(0xFF94a3b8);
   static const Color placeholderColor = Color(0xFF64748b); // slate-500
 
+  bool _isLoading = false;
+
   @override
   void dispose() {
     _emailController.dispose();
     super.dispose();
   }
 
-  void _handleSendResetLink() {
-    // Simulate API call and success
-    setState(() {
-      _isSuccess = true;
-    });
+  Future<void> _handleSendResetLink() async {
+    if (_emailController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter your email address'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+    try {
+      // Direct instantiation for now to match other pages,
+      // or usage of GetIt/Riverpod if established patterns exist.
+      // Based on Register/Login pages, we can just use FirebaseAuth instance directly
+      // OR use the AuthService we just updated.
+      // Let's use AuthService for consistency.
+      final authService = AuthService(Supabase.instance.client);
+      await authService.sendPasswordResetEmail(_emailController.text.trim());
+
+      if (mounted) {
+        setState(() {
+          _isSuccess = true;
+          _isLoading = false;
+        });
+      }
+    } on FirebaseAuthException catch (e) {
+      if (mounted) {
+        String message = 'An error occurred. Please try again.';
+        if (e.code == 'user-not-found') {
+          message = 'No user found for that email.';
+        } else if (e.code == 'invalid-email') {
+          message = 'Please enter a valid email address.';
+        }
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(message),
+            backgroundColor: Colors.red,
+          ),
+        );
+        setState(() => _isLoading = false);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        setState(() => _isLoading = false);
+      }
+    }
   }
 
   @override
@@ -204,7 +259,7 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
         SizedBox(
           height: 56,
           child: ElevatedButton(
-            onPressed: _handleSendResetLink,
+            onPressed: _isLoading ? null : _handleSendResetLink,
             style: ElevatedButton.styleFrom(
               backgroundColor: primaryColor,
               foregroundColor: Colors.white,
@@ -213,21 +268,30 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
                 borderRadius: BorderRadius.circular(12),
               ),
             ),
-            child: const Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  'Send Reset Link',
-                  style: TextStyle(
-                    fontFamily: 'Inter',
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
+            child: _isLoading
+                ? const SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(
+                      color: Colors.white,
+                      strokeWidth: 2,
+                    ),
+                  )
+                : const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        'Send Reset Link',
+                        style: TextStyle(
+                          fontFamily: 'Inter',
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      SizedBox(width: 8),
+                      Icon(Icons.arrow_forward, size: 20),
+                    ],
                   ),
-                ),
-                SizedBox(width: 8),
-                Icon(Icons.arrow_forward, size: 20),
-              ],
-            ),
           ),
         ),
       ],

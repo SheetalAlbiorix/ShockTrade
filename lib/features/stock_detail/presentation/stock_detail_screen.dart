@@ -81,7 +81,7 @@ class StockDetailScreen extends ConsumerWidget {
             leading: IconButton(
               icon: const Icon(Icons.arrow_back,
                   color: AppColors.darkTextPrimary),
-              onPressed: () => context.go('/home'),
+              onPressed: () => context.pop(),
             ),
             title: Column(
               children: [

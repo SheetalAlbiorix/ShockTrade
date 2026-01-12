@@ -62,7 +62,7 @@ class GreetingHeader extends StatelessWidget {
             () => context.push('/professional-chart'),
           ),
           const SizedBox(width: 12),
-          _buildActionButton(Icons.search, () {}),
+          _buildActionButton(Icons.search, () => context.push('/search')),
           const SizedBox(width: 12),
           Stack(
             children: [

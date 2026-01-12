@@ -1,13 +1,31 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:shock_app/core/config/app_strings.dart';
 import 'package:shock_app/core/config/app_theme.dart';
+import 'package:shock_app/core/config/env.dart';
 import 'package:shock_app/core/config/theme_provider.dart';
 import 'package:shock_app/di/di.dart';
 import 'package:shock_app/routing/app_router.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  try {
+    await Firebase.initializeApp();
+    debugPrint('Firebase initialized successfully');
+  } catch (e) {
+    debugPrint('Firebase initialization failed: $e');
+    debugPrint('Note: Authentication features will be disabled until Firebase is configured.');
+  }
+
+  await dotenv.load(fileName: ".env");
+
+  await Supabase.initialize(
+    url: Env.supabaseUrl,
+    anonKey: Env.supabaseAnonKey,
+  );
 
   // Initialize dependency injection
   await configureDependencies();

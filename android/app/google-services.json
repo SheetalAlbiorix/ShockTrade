@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "659785151256",
+    "project_id": "shocktrade-f5483",
+    "storage_bucket": "shocktrade-f5483.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:659785151256:android:497bffbc7da8184a5a246d",
+        "android_client_info": {
+          "package_name": "com.example.shock_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC-4opAZ30vJaRJQI0jUKjzmqVhA1Fd6yM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
