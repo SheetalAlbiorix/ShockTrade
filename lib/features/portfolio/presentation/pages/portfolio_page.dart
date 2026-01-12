@@ -1,283 +1,119 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shock_app/core/config/app_colors.dart';
-import 'package:shock_app/core/config/app_strings.dart';
 import 'package:shock_app/features/portfolio/application/providers/portfolio_provider.dart';
-import 'package:shock_app/features/portfolio/domain/entities/portfolio_models.dart';
-import 'package:shock_app/features/portfolio/presentation/widgets/donut_chart_widget.dart';
-import 'package:shock_app/features/portfolio/presentation/widgets/holding_row_widget.dart';
+import 'package:shock_app/features/portfolio/presentation/widgets/portfolio_summary_widgets.dart';
+import 'package:shock_app/features/portfolio/presentation/widgets/holding_widgets.dart';
+import 'package:shock_app/features/portfolio/presentation/widgets/empty_portfolio_view.dart';
+import 'package:intl/intl.dart';
 
-/// Portfolio page - displays user's stock holdings and overall portfolio value
 class PortfolioPage extends ConsumerWidget {
   const PortfolioPage({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final summary = ref.watch(portfolioSummaryProvider);
-    final assets = ref.watch(assetDistributionProvider);
-    final holdings = ref.watch(holdingsProvider);
+    final allHoldings = ref.watch(holdingsProvider);
+    final bestPerformer = ref.watch(bestPerformerProvider);
+    final selectedTab = ref.watch(selectedHoldingsTabProvider);
+    final sortBy = ref.watch(portfolioSortProvider);
+
+    // Filter holdings based on selected tab
+    var filteredHoldings = allHoldings.where((h) {
+      if (selectedTab == 'Profit') return h.pnlAmount > 0;
+      if (selectedTab == 'Loss') return h.pnlAmount < 0;
+      return true;
+    }).toList();
+
+    // Sort holdings
+    filteredHoldings.sort((a, b) {
+      switch (sortBy) {
+        case PortfolioSortOption.value:
+          return b.currentValue.compareTo(a.currentValue);
+        case PortfolioSortOption.pnl:
+          return b.pnlAmount.compareTo(a.pnlAmount);
+        case PortfolioSortOption.name:
+          return a.name.compareTo(b.name);
+        case PortfolioSortOption.quantity:
+          return b.quantity.compareTo(a.quantity);
+      }
+    });
+
+    final currencyFormat = NumberFormat.currency(locale: 'en_IN', symbol: '₹');
 
     return Scaffold(
-      backgroundColor: AppColors.darkBackground,
+      backgroundColor: AppColors.premiumBackgroundDark,
       appBar: AppBar(
-        backgroundColor: AppColors.darkSurface,
+        backgroundColor: Colors.transparent,
         elevation: 0,
+        automaticallyImplyLeading: false,
         title: const Text(
-          AppStrings.portfolio,
+          'Portfolio',
           style: TextStyle(
             color: AppColors.darkTextPrimary,
-            fontSize: 20,
+            fontSize: 18,
             fontWeight: FontWeight.bold,
           ),
         ),
-        centerTitle: false,
-        actions: [
-          IconButton(
-            onPressed: () {
-              HapticFeedback.lightImpact();
-              _showOptionsMenu(context);
-            },
-            icon: const Icon(
-              Icons.menu,
-              color: AppColors.darkTextPrimary,
-            ),
-          ),
-        ],
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(1),
-          child: Container(
-            height: 1,
-            color: AppColors.darkDivider,
-          ),
-        ),
       ),
-      body: RefreshIndicator(
-        onRefresh: () async {
-          ref.read(portfolioLoadingProvider.notifier).state = true;
-          await Future.delayed(const Duration(seconds: 1));
-          ref.read(portfolioLoadingProvider.notifier).state = false;
-        },
-        color: AppColors.navActiveColor,
-        backgroundColor: AppColors.darkCardBackground,
-        child: SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Portfolio Summary Card
-              _buildSummaryCard(context, summary),
-              const SizedBox(height: 16),
-              // Investment Metrics Row
-              _buildMetricsRow(context, summary),
-              const SizedBox(height: 16),
-              // Asset Distribution Chart
-              DonutChartWidget(categories: assets),
-              const SizedBox(height: 24),
-              // Holdings Section
-              _buildHoldingsSection(context, holdings),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSummaryCard(BuildContext context, PortfolioSummary summary) {
-    return Semantics(
-      label: 'Total portfolio value ${summary.formattedTotalValue}, '
-          '${summary.isPositive ? "up" : "down"} ${summary.formattedDailyChange} today',
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: AppColors.darkCardBackground,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.darkDivider, width: 0.5),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Total Portfolio Value',
-              style: TextStyle(
-                color: AppColors.darkTextSecondary,
-                fontSize: 14,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              summary.formattedTotalValue,
-              style: const TextStyle(
-                color: AppColors.darkTextPrimary,
-                fontSize: 32,
-                fontWeight: FontWeight.bold,
-                letterSpacing: -0.5,
-              ),
-            ),
-            const SizedBox(height: 12),
-            // Daily change indicator
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              decoration: BoxDecoration(
-                color: (summary.isPositive
-                        ? AppColors.bullishGreen
-                        : AppColors.bearishRed)
-                    .withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
+      body: allHoldings.isEmpty
+          ? EmptyPortfolioView(onAddPressed: () => context.push('/portfolio-add-holding'))
+          : SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(
-                    summary.isPositive
-                        ? Icons.arrow_circle_up
-                        : Icons.arrow_circle_down,
-                    color: summary.isPositive
-                        ? AppColors.bullishGreen
-                        : AppColors.bearishRed,
-                    size: 18,
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    summary.formattedDailyChange,
-                    style: TextStyle(
-                      color: summary.isPositive
-                          ? AppColors.bullishGreen
-                          : AppColors.bearishRed,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
+                  PortfolioSummaryHeader(summary: summary),
+                  const SizedBox(height: 24),
+                  IntrinsicHeight(
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Expanded(
+                          child: PortfolioMetricCard(
+                            title: 'Invested Value',
+                            value: currencyFormat.format(summary.investedValue),
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: PortfolioMetricCard(
+                            title: "Day's P&L",
+                            value: '${summary.dayPnlAmount >= 0 ? "+" : ""}${currencyFormat.format(summary.dayPnlAmount)}',
+                            subtitle: '(${summary.dayPnlPercentage.toStringAsFixed(1)}%)',
+                            valueColor: summary.isDayPositive ? AppColors.bullishGreen : AppColors.bearishRed,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(width: 6),
-                  const Text(
-                    '(Today)',
-                    style: TextStyle(
-                      color: AppColors.darkTextSecondary,
-                      fontSize: 12,
-                    ),
-                  ),
+                  const SizedBox(height: 32),
+                  if (bestPerformer != null) ...[
+                    HighlightCard(holding: bestPerformer),
+                    const SizedBox(height: 32),
+                  ],
+                  _buildHoldingsHeader(allHoldings.length, ref, selectedTab, sortBy),
+                  const SizedBox(height: 16),
+                  ...filteredHoldings.map((h) => PortfolioHoldingCard(
+                        holding: h,
+                        onTap: () => context.push('/stock-detail?symbol=${h.symbol}&name=${Uri.encodeComponent(h.name)}'),
+                        onEditTap: () => context.push('/portfolio-edit-holding/${h.id}'),
+                      )),
+                  const SizedBox(height: 80), // Space for FAB
                 ],
               ),
             ),
-          ],
-        ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => context.push('/portfolio-add-holding'),
+        backgroundColor: AppColors.accentGreen,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+        child: const Icon(Icons.add, color: Colors.white, size: 32),
       ),
     );
   }
 
-  Widget _buildMetricsRow(BuildContext context, PortfolioSummary summary) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 16),
-      decoration: BoxDecoration(
-        color: AppColors.darkCardBackground,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.darkDivider, width: 0.5),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: _buildMetricItem(
-              context,
-              label: 'Invested',
-              value: summary.formattedInvested,
-              color: AppColors.darkTextPrimary,
-            ),
-          ),
-          Container(
-            width: 1,
-            height: 40,
-            color: AppColors.darkDivider,
-          ),
-          Expanded(
-            child: _buildMetricItem(
-              context,
-              label: 'Current',
-              value: summary.formattedCurrent,
-              color: AppColors.darkTextPrimary,
-            ),
-          ),
-          Container(
-            width: 1,
-            height: 40,
-            color: AppColors.darkDivider,
-          ),
-          Expanded(
-            child: _buildMetricItem(
-              context,
-              label: 'Gain',
-              value: summary.formattedGain,
-              color: summary.isPositive
-                  ? AppColors.bullishGreen
-                  : AppColors.bearishRed,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMetricItem(
-    BuildContext context, {
-    required String label,
-    required String value,
-    required Color color,
-  }) {
-    return Column(
-      children: [
-        Text(
-          label,
-          style: const TextStyle(
-            color: AppColors.darkTextSecondary,
-            fontSize: 12,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          value,
-          style: TextStyle(
-            color: color,
-            fontSize: 15,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildHoldingsSection(BuildContext context, List holdings) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.darkCardBackground,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.darkDivider, width: 0.5),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Padding(
-            padding: EdgeInsets.all(16),
-            child: Text(
-              'Your Holdings',
-              style: TextStyle(
-                color: AppColors.darkTextPrimary,
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-          ...holdings.map((holding) => HoldingRowWidget(
-                holding: holding,
-                onTap: () => _showHoldingDetails(context, holding),
-              )),
-        ],
-      ),
-    );
-  }
-
-  void _showOptionsMenu(BuildContext context) {
+  void _showSortMenu(BuildContext context, WidgetRef ref) {
     showModalBottomSheet(
       context: context,
       backgroundColor: AppColors.darkSurface,
@@ -285,45 +121,128 @@ class PortfolioPage extends ConsumerWidget {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (context) {
+        final currentSort = ref.watch(portfolioSortProvider);
         return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                ListTile(
-                  leading: const Icon(Icons.add, color: AppColors.navActiveColor),
-                  title: const Text(
-                    'Add Holding',
-                    style: TextStyle(color: AppColors.darkTextPrimary),
-                  ),
-                  onTap: () => Navigator.pop(context),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Padding(
+                padding: EdgeInsets.all(20),
+                child: Text(
+                  'Sort Holdings By',
+                  style: TextStyle(color: AppColors.darkTextPrimary, fontSize: 18, fontWeight: FontWeight.bold),
                 ),
-                ListTile(
-                  leading: const Icon(Icons.download, color: AppColors.navActiveColor),
-                  title: const Text(
-                    'Export Portfolio',
-                    style: TextStyle(color: AppColors.darkTextPrimary),
-                  ),
-                  onTap: () => Navigator.pop(context),
-                ),
-                ListTile(
-                  leading: const Icon(Icons.settings, color: AppColors.navActiveColor),
-                  title: const Text(
-                    'Portfolio Settings',
-                    style: TextStyle(color: AppColors.darkTextPrimary),
-                  ),
-                  onTap: () => Navigator.pop(context),
-                ),
-              ],
-            ),
+              ),
+              _buildSortItem(context, ref, 'Value', PortfolioSortOption.value, currentSort),
+              _buildSortItem(context, ref, 'P&L Amount', PortfolioSortOption.pnl, currentSort),
+              _buildSortItem(context, ref, 'Name', PortfolioSortOption.name, currentSort),
+              _buildSortItem(context, ref, 'Quantity', PortfolioSortOption.quantity, currentSort),
+              const SizedBox(height: 20),
+            ],
           ),
         );
       },
     );
   }
 
-  void _showHoldingDetails(BuildContext context, dynamic holding) {
-    context.push('/stock-detail?symbol=${holding.symbol}&name=${holding.name}');
+  Widget _buildSortItem(BuildContext context, WidgetRef ref, String label, PortfolioSortOption option, PortfolioSortOption current) {
+    final isSelected = current == option;
+    return ListTile(
+      title: Text(label, style: TextStyle(color: isSelected ? AppColors.navActiveColor : AppColors.darkTextPrimary)),
+      trailing: isSelected ? const Icon(Icons.check, color: AppColors.navActiveColor) : null,
+      onTap: () {
+        ref.read(portfolioSortProvider.notifier).state = option;
+        Navigator.pop(context);
+      },
+    );
+  }
+
+  Widget _buildHoldingsHeader(int count, WidgetRef ref, String selectedTab, PortfolioSortOption sortBy) {
+    String sortLabel;
+    switch (sortBy) {
+      case PortfolioSortOption.value: sortLabel = 'Value'; break;
+      case PortfolioSortOption.pnl: sortLabel = 'P&L'; break;
+      case PortfolioSortOption.name: sortLabel = 'Name'; break;
+      case PortfolioSortOption.quantity: sortLabel = 'Quantity'; break;
+    }
+
+    return Column(
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Holdings ($count)',
+              style: const TextStyle(
+                color: AppColors.darkTextPrimary,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            GestureDetector(
+              onTap: () => _showSortMenu(ref.context, ref),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1E243A),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: AppColors.premiumCardBorder, width: 1),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text(
+                      'Sort: ',
+                      style: TextStyle(color: AppColors.darkTextSecondary, fontSize: 13),
+                    ),
+                    Text(
+                      sortLabel,
+                      style: const TextStyle(color: Color(0xFF4C8CFF), fontSize: 13, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(width: 4),
+                    const Icon(Icons.keyboard_arrow_down, color: Color(0xFF4C8CFF), size: 16),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        Row(
+          children: ['All', 'Profit', 'Loss'].map((tab) {
+            final isSelected = selectedTab == tab;
+            return Expanded(
+              child: GestureDetector(
+                onTap: () => ref.read(selectedHoldingsTabProvider.notifier).state = tab,
+                child: Container(
+                  margin: EdgeInsets.only(
+                    right: tab != 'Loss' ? 8 : 0,
+                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  decoration: BoxDecoration(
+                    color: isSelected ? Colors.transparent : AppColors.premiumCardBackground,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: isSelected ? AppColors.navActiveColor : AppColors.premiumCardBorder,
+                      width: 1.5,
+                    ),
+                  ),
+                  child: Center(
+                    child: Text(
+                      tab,
+                      style: TextStyle(
+                        color: isSelected ? AppColors.darkTextPrimary : AppColors.darkTextSecondary,
+                        fontSize: 14,
+                        fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+      ],
+    );
   }
 }

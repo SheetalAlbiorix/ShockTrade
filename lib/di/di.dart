@@ -4,6 +4,9 @@ import 'package:shock_app/core/networking/api_client.dart';
 import 'package:shock_app/features/auth/domain/repositories/auth_repository.dart';
 import 'package:shock_app/features/auth/domain/usecases/login_usecase.dart';
 import 'package:shock_app/infrastructure/auth/auth_repository_impl.dart';
+import 'package:shock_app/core/networking/indian_api_client.dart';
+import 'package:shock_app/features/stock_detail/domain/stock_repository.dart';
+import 'package:shock_app/features/stock_detail/data/stock_repository_impl.dart';
 
 final getIt = GetIt.instance;
 
@@ -12,9 +15,18 @@ Future<void> configureDependencies() async {
   // Core - Networking
   getIt.registerLazySingleton<Dio>(() => createDioClient());
 
+  // Networking
+  getIt.registerLazySingleton<IndianApiClient>(
+      () => IndianApiClient(getIt<Dio>()));
+
   // Infrastructure - Repositories
   getIt.registerLazySingleton<AuthRepository>(
     () => AuthRepositoryImpl(dio: getIt<Dio>()),
+  );
+
+  // Stock Feature
+  getIt.registerLazySingleton<StockRepository>(
+    () => StockRepositoryImpl(getIt<IndianApiClient>()),
   );
 
   // Domain - Use Cases

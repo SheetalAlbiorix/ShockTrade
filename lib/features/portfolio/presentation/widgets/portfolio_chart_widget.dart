@@ -1,0 +1,137 @@
+import 'package:flutter/material.dart';
+import 'dart:ui' as ui;
+import 'package:shock_app/core/config/app_colors.dart';
+import 'package:shock_app/features/portfolio/domain/entities/portfolio_models.dart';
+
+class PortfolioChartWidget extends StatelessWidget {
+  final List<ChartDataPoint> dataPoints;
+
+  const PortfolioChartWidget({super.key, required this.dataPoints});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 220,
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 20),
+      decoration: BoxDecoration(
+        color: const Color(0xFF131A2D),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: AppColors.premiumCardBorder, width: 1),
+      ),
+      child: Stack(
+        children: [
+          CustomPaint(
+            size: Size.infinite,
+            painter: _LineChartPainter(dataPoints: dataPoints),
+          ),
+          // Highlight dot (Centered as per image 1)
+          Positioned(
+            left: 175,
+            top: 75,
+            child: Container(
+              width: 12,
+              height: 12,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
+                border: Border.all(color: const Color(0xFF4C8CFF), width: 3),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF4C8CFF).withValues(alpha: 0.6),
+                    blurRadius: 10,
+                    spreadRadius: 2,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _LineChartPainter extends CustomPainter {
+  final List<ChartDataPoint> dataPoints;
+
+  _LineChartPainter({required this.dataPoints});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (dataPoints.length < 2) return;
+
+    final paint = Paint()
+      ..color = const Color(0xFF4C8CFF)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 3
+      ..strokeCap = StrokeCap.round;
+
+    final areaPaint = Paint()
+      ..shader = ui.Gradient.linear(
+        const Offset(0, 0),
+        Offset(0, size.height),
+        [
+          const Color(0xFF4C8CFF).withValues(alpha: 0.25),
+          const Color(0xFF4C8CFF).withValues(alpha: 0.0),
+        ],
+      )
+      ..style = PaintingStyle.fill;
+
+    final path = Path();
+    final areaPath = Path();
+
+    final double xInterval = size.width / (dataPoints.length - 1);
+    final double maxY = dataPoints.map((p) => p.y).reduce((a, b) => a > b ? a : b);
+    final double minY = dataPoints.map((p) => p.y).reduce((a, b) => a < b ? a : b);
+    final double yRange = maxY - minY;
+    
+    double normalizeY(double y) {
+      if (yRange == 0) return size.height / 2;
+      return size.height - ((y - minY) / yRange * (size.height * 0.6) + (size.height * 0.2));
+    }
+
+    path.moveTo(0, normalizeY(dataPoints[0].y));
+    areaPath.moveTo(0, size.height);
+    areaPath.lineTo(0, normalizeY(dataPoints[0].y));
+
+    for (int i = 1; i < dataPoints.length; i++) {
+      final x = i * xInterval;
+      final y = normalizeY(dataPoints[i].y);
+      
+<<<<<<< HEAD
+      // Use cubic bezier for smooth effect
+=======
+>>>>>>> c5d8d4e (feat: refine portfolio UI, implement sorting, and enhance navigation flows)
+      final prevX = (i - 1) * xInterval;
+      final prevY = normalizeY(dataPoints[i-1].y);
+      
+      path.cubicTo(
+        prevX + xInterval / 2,
+        prevY,
+        prevX + xInterval / 2,
+        y,
+        x,
+        y,
+      );
+      
+      areaPath.cubicTo(
+        prevX + xInterval / 2,
+        prevY,
+        prevX + xInterval / 2,
+        y,
+        x,
+        y,
+      );
+    }
+
+    areaPath.lineTo(size.width, size.height);
+    areaPath.close();
+
+    canvas.drawPath(areaPath, areaPaint);
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
