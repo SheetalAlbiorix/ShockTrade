@@ -17,6 +17,7 @@ import 'package:shock_app/features/alerts/presentation/pages/alerts_page.dart';
 import 'package:shock_app/features/account/presentation/pages/edit_profile_page.dart';
 import 'package:shock_app/features/portfolio/presentation/pages/add_holding_page.dart';
 import 'package:shock_app/features/portfolio/presentation/pages/edit_holding_page.dart';
+import 'package:shock_app/features/stocks/presentation/pages/market_indices_screen.dart';
 
 /// Application router configuration using GoRouter
 final appRouter = GoRouter(
@@ -69,8 +70,16 @@ final appRouter = GoRouter(
       builder: (context, state) {
         final symbol = state.uri.queryParameters['symbol'] ?? 'AAPL';
         final name = state.uri.queryParameters['name'] ?? 'Apple Inc.';
-        // Use symbol as the key for the provider
-        return StockDetailScreen(symbol: symbol, name: name);
+        final price =
+            double.tryParse(state.uri.queryParameters['price'] ?? '');
+        final pChange =
+            double.tryParse(state.uri.queryParameters['pChange'] ?? '');
+        return StockDetailScreen(
+          symbol: symbol,
+          name: name,
+          initialPrice: price,
+          initialPercentChange: pChange,
+        );
       },
     ),
     GoRoute(
@@ -126,6 +135,11 @@ final appRouter = GoRouter(
         final id = state.pathParameters['id']!;
         return EditHoldingPage(holdingId: id);
       },
+    ),
+    GoRoute(
+      path: '/market-indices',
+      name: 'market-indices',
+      builder: (context, state) => const MarketIndicesScreen(),
     ),
   ],
 );

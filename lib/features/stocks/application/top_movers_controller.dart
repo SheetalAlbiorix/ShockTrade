@@ -1,41 +1,30 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shock_app/di/di.dart';
-import 'package:shock_app/features/stock_detail/domain/models.dart';
-import 'package:shock_app/features/stock_detail/domain/stock_repository.dart';
+import 'package:shock_app/features/stocks/domain/models/market_stock.dart';
+import 'package:shock_app/features/stocks/domain/repositories/market_repository.dart';
 
 class TopMoversController
-    extends StateNotifier<AsyncValue<List<StockDetailState>>> {
-  final StockRepository _repository;
+    extends StateNotifier<AsyncValue<List<MarketStock>>> {
+  final MarketRepository _repository;
 
   TopMoversController(this._repository) : super(const AsyncValue.loading()) {
     _loadTopMovers();
   }
 
   Future<void> _loadTopMovers() async {
-    // List of stocks to display in Top Movers
-    final symbols = [
-      'RELIANCE.NS',
-      'TCS.NS',
-      'HDFCBANK.NS',
-      'INFY.NS',
-      'ICICIBANK.NS',
-      'SBIN.NS',
-      'BHARTIARTL.NS',
-      'ITC.NS',
-    ];
-
     try {
-      final futures =
-          symbols.map((symbol) => _repository.getStockDetails(symbol));
-      final results = await Future.wait(futures);
-      state = AsyncValue.data(results);
+      // Fetch trending stocks which contains top gainers
+      final stocks = await _repository.getTrendingStocks();
+      state = AsyncValue.data(stocks);
     } catch (e, st) {
       state = AsyncValue.error(e, st);
     }
   }
+
+  Future<void> refresh() => _loadTopMovers();
 }
 
 final topMoversProvider = StateNotifierProvider<TopMoversController,
-    AsyncValue<List<StockDetailState>>>((ref) {
-  return TopMoversController(getIt<StockRepository>());
+    AsyncValue<List<MarketStock>>>((ref) {
+  return TopMoversController(getIt<MarketRepository>());
 });

@@ -9,12 +9,32 @@ import 'package:shock_app/features/stock_detail/domain/stock_repository.dart';
 class StockDetailController extends StateNotifier<StockDetailState> {
   final StockRepository _repository;
 
-  StockDetailController(String symbol, this._repository)
-      : super(StockDetailState.initial().copyWith(symbol: symbol)) {
+  StockDetailController(String symbol, this._repository,
+      {String? name, double? price, double? pChange})
+      : super(StockDetailState.fromBasicInfo(
+          symbol: symbol,
+          name: name ?? symbol,
+          price: price,
+          pChange: pChange,
+        )) {
     _loadStockData(symbol);
   }
 
+  /// Seed the controller with initial data if it's still loading or unitialized
+  void seedData({required String name, double? price, double? pChange}) {
+    // Only update if we haven't loaded full data yet or if it's the initial placeholder
+    if (state.companyName == state.symbol || state.isLoading) {
+      state = state.copyWith(
+        companyName: name,
+        price: price ?? state.price,
+        percentChange: pChange ?? state.percentChange,
+        isPositive: (pChange ?? state.percentChange) >= 0,
+      );
+    }
+  }
+
   Future<void> _loadStockData(String symbol) async {
+    // Keep current values just in case we have some initial ones
     state = state.copyWith(isLoading: true, errorMessage: null);
 
     try {

@@ -1,60 +1,56 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shock_app/core/config/app_colors.dart';
-
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:shock_app/core/services/profile_service.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shock_app/features/auth/application/providers/auth_providers.dart';
+import 'package:shock_app/features/auth/application/providers/profile_providers.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-class ProfileSection extends StatefulWidget {
+class ProfileSection extends ConsumerStatefulWidget {
   const ProfileSection({super.key});
 
   @override
-  State<ProfileSection> createState() => _ProfileSectionState();
+  ConsumerState<ProfileSection> createState() => _ProfileSectionState();
 }
 
-class _ProfileSectionState extends State<ProfileSection> {
-  String _displayName = 'Loading...';
-  String _email = '';
-  String? _avatarUrl;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadProfile();
-  }
-
-  Future<void> _loadProfile() async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user != null) {
-      // 1. Set initial data from Firebase Cache (Fast)
-      if (mounted) {
-        setState(() {
-          _displayName = user.displayName ?? 'Trader';
-          _email = user.email ?? '';
-          _avatarUrl = user.photoURL;
-        });
-      }
-
-      // 2. Fetch latest from Supabase (DB Source of Truth)
-      try {
-        final profileService = ProfileService(Supabase.instance.client);
-        final profile = await profileService.getProfile(user.uid);
-        if (profile != null && mounted) {
-          setState(() {
-            _displayName = profile['full_name'] ?? _displayName;
-            _email = profile['email'] ?? _email;
-            _avatarUrl = profile['avatar_url'] ?? _avatarUrl;
-          });
-        }
-      } catch (e) {
-        debugPrint('Error fetching profile in section: $e');
-      }
-    }
-  }
-
+class _ProfileSectionState extends ConsumerState<ProfileSection> {
   @override
   Widget build(BuildContext context) {
+    final authState = ref.watch(authControllerProvider);
+    final profileAsync = ref.watch(userProfileProvider);
+
+    final String displayName = profileAsync.maybeWhen(
+      data: (profile) => profile?.fullName ?? authState.maybeWhen(
+        authenticated: (user) => user.name,
+        orElse: () => 'Trader',
+      ),
+      orElse: () => authState.maybeWhen(
+        authenticated: (user) => user.name,
+        orElse: () => 'Trader',
+      ),
+    );
+
+    final String email = profileAsync.maybeWhen(
+      data: (profile) => profile?.email ?? authState.maybeWhen(
+        authenticated: (user) => user.email,
+        orElse: () => '',
+      ),
+      orElse: () => authState.maybeWhen(
+        authenticated: (user) => user.email,
+        orElse: () => '',
+      ),
+    );
+
+    final String? avatarUrl = profileAsync.maybeWhen(
+      data: (profile) => profile?.avatarUrl ?? authState.maybeWhen(
+        authenticated: (user) => user.avatarUrl,
+        orElse: () => null,
+      ),
+      orElse: () => authState.maybeWhen(
+        authenticated: (user) => user.avatarUrl,
+        orElse: () => null,
+      ),
+    );
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -76,7 +72,7 @@ class _ProfileSectionState extends State<ProfileSection> {
                       color: Colors.white.withOpacity(0.1), width: 2),
                   image: DecorationImage(
                     image: NetworkImage(
-                      _avatarUrl ??
+                      avatarUrl ??
                           'https://lh3.googleusercontent.com/aida-public/AB6AXuDBBAnWS59jUq6K0aHWcx6o0E9fBtWrJgKcH8ev2pUQiZtldm9WqFkLKIDcmfrIXnsnGtS1hnA2MGDa5nEPM-lBVoV5qIBsveCNT-caZSc3e5vHNPXOJESP6Osj6GkObFY405_7Uevh00kAlREqoTqYNS_IOQF0wO_0spho5Nkgpp2wgm4SAyuASIU4xhfJd3vwI4QIkZj0oqABUPTu-vhSY9yYH59L6hIAMoxvYWWs-fttdcpK-Jiv_2HmyrneVemzbG2XJsSjQlA',
                     ),
                     fit: BoxFit.cover,
@@ -112,7 +108,7 @@ class _ProfileSectionState extends State<ProfileSection> {
                   children: [
                     Flexible(
                       child: Text(
-                        _displayName,
+                        displayName,
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 18,
@@ -144,7 +140,7 @@ class _ProfileSectionState extends State<ProfileSection> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  _email,
+                  email,
                   style: const TextStyle(
                     color: AppColors.darkTextSecondary,
                     fontSize: 14,
@@ -161,8 +157,7 @@ class _ProfileSectionState extends State<ProfileSection> {
                 color: AppColors.darkTextSecondary),
             onPressed: () async {
               await context.push('/edit-profile');
-              // Refresh when coming back
-              _loadProfile();
+              // provider is automatically invalidated in EditProfilePage
             },
           ),
         ],

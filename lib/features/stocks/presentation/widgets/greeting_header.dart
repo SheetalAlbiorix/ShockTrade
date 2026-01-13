@@ -1,12 +1,58 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shock_app/core/config/app_colors.dart';
+import 'package:shock_app/features/auth/application/providers/auth_providers.dart';
+import 'package:shock_app/features/auth/application/providers/profile_providers.dart';
 
-class GreetingHeader extends StatelessWidget {
+class GreetingHeader extends ConsumerWidget {
   const GreetingHeader({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final authState = ref.watch(authControllerProvider);
+    final profileAsync = ref.watch(userProfileProvider);
+
+    final String userName = profileAsync.maybeWhen(
+      data: (profile) {
+        final name = profile?.fullName ?? authState.maybeWhen(
+          authenticated: (user) => user.name,
+          orElse: () => 'Guest',
+        );
+        final finalName = name ?? 'Guest';
+        print('DEBUG: GreetingHeader - Final userName: $finalName (from profile: ${profile?.fullName})');
+        return finalName;
+      },
+      orElse: () {
+        final name = authState.maybeWhen(
+          authenticated: (user) => user.name,
+          orElse: () => 'Guest',
+        );
+        final finalName = name ?? 'Guest';
+        print('DEBUG: GreetingHeader - Falling back to auth userName: $finalName');
+        return finalName;
+      },
+    );
+
+    final String? avatarUrl = profileAsync.maybeWhen(
+      data: (profile) {
+        final url = profile?.avatarUrl ?? authState.maybeWhen(
+          authenticated: (user) => user.avatarUrl,
+          orElse: () => null,
+        );
+        print('DEBUG: GreetingHeader - Final avatarUrl: $url (from profile: ${profile?.avatarUrl})');
+        return url;
+      },
+      orElse: () {
+        final url = authState.maybeWhen(
+          authenticated: (user) => user.avatarUrl,
+          orElse: () => null,
+        );
+        print('DEBUG: GreetingHeader - Falling back to auth avatarUrl: $url');
+        return url;
+      },
+    );
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
       child: Row(
@@ -18,9 +64,9 @@ class GreetingHeader extends StatelessWidget {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               border: Border.all(color: AppColors.premiumAccentBlue, width: 2),
-              image: const DecorationImage(
+              image: DecorationImage(
                 image: NetworkImage(
-                    'https://i.pravatar.cc/150?img=11'), // Placeholder avatar
+                    avatarUrl ?? 'https://i.pravatar.cc/150?img=11'), // Use dynamic avatar or placeholder
                 fit: BoxFit.cover,
               ),
               boxShadow: [
@@ -46,7 +92,7 @@ class GreetingHeader extends StatelessWidget {
                       ),
                 ),
                 Text(
-                  'Arjun Mehta',
+                  userName,
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
                         color: AppColors.darkTextPrimary,
                         fontWeight: FontWeight.bold,
