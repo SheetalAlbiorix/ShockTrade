@@ -1,16 +1,14 @@
 import 'package:dio/dio.dart';
+import 'package:shock_app/core/config/env.dart';
 
 class IndianApiClient {
   final Dio _dio;
-  // TODO: Move this to environment variables in production
-  static const String _apiKey =
-      'sk-live-xAQ6loMs8DHtSawG2ThEkSJumtWvEOF4wxeCA1iG';
   static const String _baseUrl = 'https://stock.indianapi.in';
 
   IndianApiClient(this._dio) {
     _dio.options.baseUrl = _baseUrl;
     _dio.options.headers = {
-      'X-Api-Key': _apiKey,
+      'X-Api-Key': Env.indianStockApiKey,
       'Content-Type': 'application/json',
     };
   }
