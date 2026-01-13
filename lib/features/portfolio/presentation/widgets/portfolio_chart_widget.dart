@@ -99,10 +99,7 @@ class _LineChartPainter extends CustomPainter {
       final x = i * xInterval;
       final y = normalizeY(dataPoints[i].y);
       
-<<<<<<< HEAD
       // Use cubic bezier for smooth effect
-=======
->>>>>>> c5d8d4e (feat: refine portfolio UI, implement sorting, and enhance navigation flows)
       final prevX = (i - 1) * xInterval;
       final prevY = normalizeY(dataPoints[i-1].y);
       
