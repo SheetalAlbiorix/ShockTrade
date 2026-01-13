@@ -3,8 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shock_app/core/config/app_colors.dart';
 import 'package:shock_app/features/stocks/application/top_movers_controller.dart';
-import 'package:shock_app/features/stock_detail/domain/models.dart';
+import 'package:shock_app/features/stocks/domain/models/market_stock.dart';
 import 'package:shock_app/core/utils/stock_logo_mapper.dart';
+import 'package:shock_app/core/widgets/error_placeholder.dart';
 
 class TopMoversSection extends ConsumerStatefulWidget {
   const TopMoversSection({super.key});
@@ -99,12 +100,10 @@ class _TopMoversSectionState extends ConsumerState<TopMoversSection> {
               child:
                   CircularProgressIndicator(color: AppColors.premiumAccentBlue),
             )),
-            error: (e, st) => Center(
-                child: Padding(
-              padding: const EdgeInsets.all(20.0),
-              child: Text('Failed to load data',
-                  style: TextStyle(color: AppColors.premiumAccentRed)),
-            )),
+            error: (e, st) => ErrorPlaceholder(
+              message: 'Failed to load movers',
+              onRetry: () => ref.refresh(topMoversProvider),
+            ),
           ),
         ),
       ],
@@ -146,17 +145,14 @@ class _TopMoversSectionState extends ConsumerState<TopMoversSection> {
     );
   }
 
-  Widget _buildStockItem(BuildContext context, StockDetailState stock) {
-    // Use API image if available, else fallback to StockLogoMapper
-    String logoUrl = stock.imageUrl ??
+  Widget _buildStockItem(BuildContext context, MarketStock stock) {
+    // Use StockLogoMapper for consistent logos
+    String logoUrl =
         StockLogoMapper.getLogoUrl(stock.symbol.replaceAll('.NS', ''));
-
-    // Exchange logic
-    String exchange = 'NSE';
 
     return InkWell(
       onTap: () => context.push(
-          '/stock-detail?symbol=${stock.symbol}&name=${stock.companyName}'),
+          '/stock-detail?symbol=${stock.symbol}&name=${stock.name}&price=${stock.lastPrice}&pChange=${stock.pChange}'),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Row(
@@ -194,11 +190,13 @@ class _TopMoversSectionState extends ConsumerState<TopMoversSection> {
                     ),
                   ),
                   Text(
-                    exchange,
+                    stock.name,
                     style: const TextStyle(
                       color: AppColors.darkTextSecondary,
                       fontSize: 12,
                     ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ],
               ),
@@ -207,7 +205,7 @@ class _TopMoversSectionState extends ConsumerState<TopMoversSection> {
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text(
-                  '₹ ${stock.price.toStringAsFixed(2)}',
+                  '₹${stock.lastPrice.toStringAsFixed(2)}',
                   style: const TextStyle(
                     color: AppColors.darkTextPrimary,
                     fontWeight: FontWeight.bold,
@@ -215,7 +213,7 @@ class _TopMoversSectionState extends ConsumerState<TopMoversSection> {
                   ),
                 ),
                 Text(
-                  '${stock.isPositive ? '+' : ''}${stock.percentChange.toStringAsFixed(2)}%',
+                  '${stock.isPositive ? '+' : ''}${stock.pChange.toStringAsFixed(2)}%',
                   style: TextStyle(
                     color: stock.isPositive
                         ? AppColors.premiumAccentGreen

@@ -5,6 +5,7 @@ import 'package:shock_app/core/config/app_colors.dart';
 import 'package:shock_app/features/stocks/presentation/providers/indices_provider.dart';
 import 'package:shock_app/features/stocks/domain/models/market_stock.dart';
 import 'package:shock_app/core/utils/stock_logo_mapper.dart';
+import 'package:shock_app/core/widgets/error_placeholder.dart';
 
 class MarketIndicesScreen extends StatelessWidget {
   const MarketIndicesScreen({super.key});
@@ -97,10 +98,9 @@ class MarketStocksList extends ConsumerWidget {
       error: (err, stack) => Center(
         child: Padding(
           padding: const EdgeInsets.all(20.0),
-          child: Text(
-            'Error: ${err.toString()}',
-            style: TextStyle(color: AppColors.premiumAccentRed),
-            textAlign: TextAlign.center,
+          child: ErrorPlaceholder(
+            message: 'Unable to load ${exchange}',
+            onRetry: () => ref.refresh(provider),
           ),
         ),
       ),
@@ -112,7 +112,7 @@ class MarketStocksList extends ConsumerWidget {
 
     return InkWell(
       onTap: () => context.push(
-          '/stock-detail?symbol=${stock.symbol}&name=${stock.name}'),
+          '/stock-detail?symbol=${stock.symbol}&name=${stock.name}&price=${stock.lastPrice}&pChange=${stock.pChange}'),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Row(

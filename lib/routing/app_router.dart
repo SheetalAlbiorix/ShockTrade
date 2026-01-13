@@ -70,8 +70,16 @@ final appRouter = GoRouter(
       builder: (context, state) {
         final symbol = state.uri.queryParameters['symbol'] ?? 'AAPL';
         final name = state.uri.queryParameters['name'] ?? 'Apple Inc.';
-        // Use symbol as the key for the provider
-        return StockDetailScreen(symbol: symbol, name: name);
+        final price =
+            double.tryParse(state.uri.queryParameters['price'] ?? '');
+        final pChange =
+            double.tryParse(state.uri.queryParameters['pChange'] ?? '');
+        return StockDetailScreen(
+          symbol: symbol,
+          name: name,
+          initialPrice: price,
+          initialPercentChange: pChange,
+        );
       },
     ),
     GoRoute(

@@ -17,17 +17,32 @@ import 'package:shock_app/features/portfolio/application/providers/portfolio_pro
 class StockDetailScreen extends ConsumerWidget {
   final String symbol;
   final String name;
+  final double? initialPrice;
+  final double? initialPercentChange;
 
   const StockDetailScreen({
     super.key,
     required this.symbol,
     required this.name,
+    this.initialPrice,
+    this.initialPercentChange,
   });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(stockDetailControllerProvider(symbol));
     final controller = ref.read(stockDetailControllerProvider(symbol).notifier);
+
+    // Seed initial data if provided from route
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (initialPrice != null || initialPercentChange != null) {
+        controller.seedData(
+          name: name,
+          price: initialPrice,
+          pChange: initialPercentChange,
+        );
+      }
+    });
 
     // Error Listener
     ref.listen<StockDetailState>(stockDetailControllerProvider(symbol),

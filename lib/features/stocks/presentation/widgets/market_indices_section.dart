@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:shock_app/core/config/app_colors.dart';
 import 'package:shock_app/features/stocks/domain/models/market_stock.dart';
 import 'package:shock_app/features/stocks/presentation/providers/indices_provider.dart';
+import 'package:shock_app/core/widgets/error_placeholder.dart';
 
 class MarketIndicesSection extends ConsumerWidget {
   const MarketIndicesSection({super.key});
@@ -74,6 +75,9 @@ class MarketIndicesSection extends ConsumerWidget {
                       value: stock.lastPrice.toStringAsFixed(2),
                       change: '${stock.pChange >= 0 ? '+' : ''}${stock.pChange.toStringAsFixed(2)}%',
                       isPositive: stock.pChange >= 0,
+                      onTap: () => context.push(
+                        '/stock-detail?symbol=${stock.symbol}&name=${stock.name}&price=${stock.lastPrice}&pChange=${stock.pChange}',
+                      ),
                     ),
                   );
                 },
@@ -88,11 +92,9 @@ class MarketIndicesSection extends ConsumerWidget {
                 child: _buildShimmerCard(),
               ),
             ),
-            error: (err, stack) => Center(
-              child: Text(
-                'Error: ${err.toString()}',
-                style: TextStyle(color: AppColors.premiumAccentRed),
-              ),
+            error: (err, stack) => ErrorPlaceholder(
+              height: 150,
+              onRetry: () => ref.refresh(nseMostActiveProvider),
             ),
           ),
         ),
@@ -123,75 +125,82 @@ class MarketIndicesSection extends ConsumerWidget {
     required String value,
     required String change,
     required bool isPositive,
+    required VoidCallback onTap,
   }) {
-    return Container(
-      width: 160,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.premiumCardBackground,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.premiumCardBorder.withOpacity(0.5)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Text(
-                  name,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: AppColors.darkTextSecondary,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12,
-                      ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        width: 160,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppColors.premiumCardBackground,
+          borderRadius: BorderRadius.circular(20),
+          border:
+              Border.all(color: AppColors.premiumCardBorder.withOpacity(0.5)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Text(
+                    name,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: AppColors.darkTextSecondary,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                        ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
-              ),
-              SizedBox(width: 4),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(
-                  color: (isPositive
-                          ? AppColors.premiumAccentGreen
-                          : AppColors.premiumAccentRed)
-                      .withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Text(
-                  change,
-                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        color: isPositive
+                const SizedBox(width: 4),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: (isPositive
                             ? AppColors.premiumAccentGreen
-                            : AppColors.premiumAccentRed,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 10,
-                      ),
+                            : AppColors.premiumAccentRed)
+                        .withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    change,
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          color: isPositive
+                              ? AppColors.premiumAccentGreen
+                              : AppColors.premiumAccentRed,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 10,
+                        ),
+                  ),
                 ),
-              ),
-            ],
-          ),
-          SizedBox(height: 8),
-          Text(
-            '₹$value',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  color: AppColors.darkTextPrimary,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 18,
-                ),
-          ),
-          Spacer(),
-          // Chart placeholder
-          SizedBox(
-            height: 44,
-            width: double.infinity,
-            child: CustomPaint(
-              painter: _IndexChartPainter(isPositive: isPositive),
+              ],
             ),
-          ),
-        ],
+            const SizedBox(height: 8),
+            Text(
+              '₹$value',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    color: AppColors.darkTextPrimary,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                  ),
+            ),
+            const Spacer(),
+            // Chart placeholder
+            SizedBox(
+              height: 44,
+              width: double.infinity,
+              child: CustomPaint(
+                painter: _IndexChartPainter(isPositive: isPositive),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

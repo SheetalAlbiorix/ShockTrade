@@ -98,6 +98,25 @@ class StockDetailState with _$StockDetailState {
     RiskMeter? riskMeter,
   }) = _StockDetailState;
 
+  factory StockDetailState.fromBasicInfo({
+    required String symbol,
+    required String name,
+    double? price,
+    double? pChange,
+  }) {
+    final initial = StockDetailState.initial();
+    return initial.copyWith(
+      symbol: symbol,
+      companyName: name,
+      price: price ?? initial.price,
+      percentChange: pChange ?? initial.percentChange,
+      priceChange: (price != null && initial.tradingInfo.prevClose.isNotEmpty)
+          ? price - (double.tryParse(initial.tradingInfo.prevClose) ?? price)
+          : 0.0,
+      isPositive: (pChange ?? 0.0) >= 0,
+    );
+  }
+
   factory StockDetailState.initial() => StockDetailState(
         symbol: 'AAPL',
         companyName: 'Apple Inc.',
