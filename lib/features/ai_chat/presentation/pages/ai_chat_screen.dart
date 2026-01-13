@@ -11,6 +11,7 @@ import 'package:shock_app/features/ai_chat/presentation/widgets/suggestion_chips
 import 'package:shock_app/features/ai_chat/presentation/widgets/stock_card_widget.dart';
 import 'package:shock_app/features/ai_chat/presentation/widgets/typing_indicator.dart';
 import 'package:shock_app/features/ai_chat/presentation/widgets/chat_input_footer.dart';
+import 'package:shock_app/features/ai_chat/application/chat_controller.dart';
 
 /// AI Chat Screen - Pixel perfect implementation matching HTML design
 class AIChatScreen extends ConsumerStatefulWidget {
@@ -22,111 +23,76 @@ class AIChatScreen extends ConsumerStatefulWidget {
 
 class _AIChatScreenState extends ConsumerState<AIChatScreen> {
   final ScrollController _scrollController = ScrollController();
-  final List<ChatMessage> _messages = [];
-  bool _isTyping = false;
+  final TextEditingController _textController = TextEditingController();
 
-  @override
-  void initState() {
-    super.initState();
-    _loadMockData();
-  }
+  bool _isSending = false;
 
   @override
   void dispose() {
     _scrollController.dispose();
+    _textController.dispose();
     super.dispose();
   }
 
-  void _loadMockData() {
-    final now = DateTime.now();
-    setState(() {
-      _messages.addAll([
-        ChatMessage(
-          id: '1',
-          content:
-              'Hello! I\'m ready to analyze the Indian markets. Ask me about a specific stock like HDFC Bank, check your portfolio health, or explore general market trends.',
-          type: MessageType.bot,
-          timestamp: now.subtract(const Duration(minutes: 5)),
-        ),
-        ChatMessage(
-          id: '2',
-          content: 'How is Tata Motors performing today?',
-          type: MessageType.user,
-          timestamp: now.subtract(const Duration(minutes: 3)),
-          isRead: true,
-        ),
-        ChatMessage(
-          id: '3',
-          content:
-              'Tata Motors (TATAMOTORS) is showing strong bullish momentum today, driven by positive Q3 earnings expectations.',
-          type: MessageType.bot,
-          timestamp: now.subtract(const Duration(minutes: 2)),
-          metadata: {
-            'hasStockCard': true,
-            'symbol': 'TATAMOTORS',
-            'price': 945.65,
-            'change': 1.8,
-            'sparkline': [920.0, 925.0, 930.0, 935.0, 928.0, 940.0, 945.0],
-          },
-        ),
-      ]);
-    });
-  }
-
-  void _handleSendMessage(String text) {
-    if (text.trim().isEmpty) return;
-
-    final newMessage = ChatMessage(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      content: text,
-      type: MessageType.user,
-      timestamp: DateTime.now(),
-      isRead: false,
-    );
-
-    setState(() {
-      _messages.add(newMessage);
-      _isTyping = true;
-    });
-
-    // Scroll to bottom
-    Future.delayed(const Duration(milliseconds: 100), () {
+  void _scrollToBottom() {
+    if (_scrollController.hasClients) {
       _scrollController.animateTo(
         _scrollController.position.maxScrollExtent,
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeOut,
       );
+    }
+  }
+
+  Future<void> _handleSendMessage(String text) async {
+    if (text.trim().isEmpty || _isSending) return;
+
+    setState(() {
+      _isSending = true;
     });
 
-    // Simulate bot response
-    Future.delayed(const Duration(seconds: 2), () {
+    try {
+      _textController.clear();
+
+      // Scroll to bottom immediately to show user message
+      Future.delayed(const Duration(milliseconds: 100), _scrollToBottom);
+
+      await ref.read(chatControllerProvider.notifier).sendMessage(text);
+
+      // Scroll to bottom after response
+      Future.delayed(const Duration(milliseconds: 100), _scrollToBottom);
+    } finally {
       if (mounted) {
         setState(() {
-          _isTyping = false;
-          _messages.add(
-            ChatMessage(
-              id: DateTime.now().millisecondsSinceEpoch.toString(),
-              content:
-                  'I understand you\'re asking about "$text". Let me analyze that for you...',
-              type: MessageType.bot,
-              timestamp: DateTime.now(),
-            ),
-          );
-        });
-
-        Future.delayed(const Duration(milliseconds: 100), () {
-          _scrollController.animateTo(
-            _scrollController.position.maxScrollExtent,
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeOut,
-          );
+          _isSending = false;
         });
       }
-    });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final chatState = ref.watch(chatControllerProvider);
+    final messages = chatState.messages;
+    final isTyping = chatState.isLoading;
+
+    // Scroll to bottom when new messages arrive or show error
+    ref.listen(chatControllerProvider, (previous, next) {
+      if (next.messages.length > (previous?.messages.length ?? 0)) {
+        Future.delayed(const Duration(milliseconds: 100), _scrollToBottom);
+      }
+
+      if (next.error != null && next.error != previous?.error) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(next.error!),
+            backgroundColor: AIChatColors.danger,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    });
+
     return Scaffold(
       backgroundColor: AIChatColors.backgroundDark,
       body: Column(
@@ -137,7 +103,7 @@ class _AIChatScreenState extends ConsumerState<AIChatScreen> {
               ref.read(currentTabIndexProvider.notifier).state = 0;
             },
             onMenuPressed: () {
-              // Show menu
+              ref.read(chatControllerProvider.notifier).restartSession();
             },
           ),
 
@@ -146,7 +112,7 @@ class _AIChatScreenState extends ConsumerState<AIChatScreen> {
             child: ListView.builder(
               controller: _scrollController,
               padding: const EdgeInsets.fromLTRB(16, 24, 16, 24),
-              itemCount: _messages.length + (_isTyping ? 2 : 1),
+              itemCount: messages.length + (isTyping ? 2 : 1),
               itemBuilder: (context, index) {
                 // Timestamp at the beginning
                 if (index == 0) {
@@ -158,11 +124,15 @@ class _AIChatScreenState extends ConsumerState<AIChatScreen> {
                 final messageIndex = index - 1;
 
                 // Typing indicator
-                if (_isTyping && messageIndex == _messages.length) {
+                if (isTyping && messageIndex == messages.length) {
                   return const TypingIndicator();
                 }
 
-                final message = _messages[messageIndex];
+                if (messageIndex >= messages.length) {
+                  return const SizedBox.shrink();
+                }
+
+                final message = messages[messageIndex];
 
                 // User message
                 if (message.type == MessageType.user) {
@@ -196,7 +166,8 @@ class _AIChatScreenState extends ConsumerState<AIChatScreen> {
                     content: message.content,
                     embeddedWidget: embeddedWidget,
                     showAvatar: messageIndex == 0 ||
-                        _messages[messageIndex - 1].type != MessageType.bot,
+                        (messageIndex > 0 &&
+                            messages[messageIndex - 1].type != MessageType.bot),
                   );
 
                   // Add suggestion chips after first bot message
@@ -241,12 +212,23 @@ class _AIChatScreenState extends ConsumerState<AIChatScreen> {
 
           // Input footer
           ChatInputFooter(
+            controller: _textController,
+            isListening: chatState.isListening,
             onSendMessage: _handleSendMessage,
             onAttachPressed: () {
-              // Handle attach
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Attachments coming soon!')),
+              );
             },
             onMicPressed: () {
-              // Handle voice input
+              ref.read(chatControllerProvider.notifier).toggleListening((text) {
+                if (_isSending) return; // Ignore updates while sending
+                _textController.text = text;
+                // Set cursor to end
+                _textController.selection = TextSelection.fromPosition(
+                  TextPosition(offset: _textController.text.length),
+                );
+              });
             },
           ),
         ],

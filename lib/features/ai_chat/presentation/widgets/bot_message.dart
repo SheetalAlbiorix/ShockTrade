@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:shock_app/features/ai_chat/presentation/ai_chat_colors.dart';
 
 /// Bot message bubble with avatar and content
@@ -101,12 +102,23 @@ class BotMessage extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       // Main text content
-                      Text(
-                        content,
-                        style: const TextStyle(
-                          color: AIChatColors.textGray100,
-                          fontSize: 15,
-                          height: 1.5,
+                      MarkdownBody(
+                        data: content,
+                        styleSheet: MarkdownStyleSheet(
+                          p: const TextStyle(
+                            color: AIChatColors.textGray100,
+                            fontSize: 15,
+                            height: 1.5,
+                          ),
+                          strong: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          code: const TextStyle(
+                            color: AIChatColors.primary,
+                            backgroundColor: Color(0x206366F1),
+                            fontFamily: 'monospace',
+                          ),
                         ),
                       ),
 

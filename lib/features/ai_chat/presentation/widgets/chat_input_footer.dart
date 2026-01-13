@@ -6,12 +6,16 @@ class ChatInputFooter extends StatefulWidget {
   final Function(String) onSendMessage;
   final VoidCallback? onAttachPressed;
   final VoidCallback? onMicPressed;
+  final bool isListening;
+  final TextEditingController? controller;
 
   const ChatInputFooter({
     super.key,
     required this.onSendMessage,
     this.onAttachPressed,
     this.onMicPressed,
+    this.isListening = false,
+    this.controller,
   });
 
   @override
@@ -19,23 +23,34 @@ class ChatInputFooter extends StatefulWidget {
 }
 
 class _ChatInputFooterState extends State<ChatInputFooter> {
-  final TextEditingController _controller = TextEditingController();
+  late TextEditingController _controller;
   final FocusNode _focusNode = FocusNode();
   bool _hasText = false;
 
   @override
   void initState() {
     super.initState();
-    _controller.addListener(() {
+    _controller = widget.controller ?? TextEditingController();
+    _controller.addListener(_onTextChanged);
+    // Initial check
+    _hasText = _controller.text.trim().isNotEmpty;
+  }
+
+  void _onTextChanged() {
+    if (mounted) {
       setState(() {
         _hasText = _controller.text.trim().isNotEmpty;
       });
-    });
+    }
   }
 
   @override
   void dispose() {
-    _controller.dispose();
+    _controller.removeListener(_onTextChanged);
+    // Only dispose if we created it
+    if (widget.controller == null) {
+      _controller.dispose();
+    }
     _focusNode.dispose();
     super.dispose();
   }
@@ -45,7 +60,7 @@ class _ChatInputFooterState extends State<ChatInputFooter> {
     if (text.isNotEmpty) {
       widget.onSendMessage(text);
       _controller.clear();
-      _focusNode.requestFocus();
+      _focusNode.unfocus(); // Close keyboard
     }
   }
 
@@ -132,8 +147,12 @@ class _ChatInputFooterState extends State<ChatInputFooter> {
                           // Mic button
                           IconButton(
                             onPressed: widget.onMicPressed,
-                            icon: const Icon(Icons.mic_none),
-                            color: AIChatColors.textGray400,
+                            icon: Icon(widget.isListening
+                                ? Icons.mic
+                                : Icons.mic_none),
+                            color: widget.isListening
+                                ? AIChatColors.primary
+                                : AIChatColors.textGray400,
                             iconSize: 20,
                             padding: const EdgeInsets.all(8),
                           ),

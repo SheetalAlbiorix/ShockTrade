@@ -84,12 +84,70 @@ class GlassHeader extends StatelessWidget implements PreferredSizeWidget {
                   ),
 
                   // Menu button
-                  IconButton(
-                    onPressed: onMenuPressed,
-                    icon: const Icon(Icons.more_vert, size: 24),
-                    color: AIChatColors.textWhite.withOpacity(0.8),
-                    style: IconButton.styleFrom(
-                      backgroundColor: AIChatColors.whiteHover5,
+                  Theme(
+                    data: Theme.of(context).copyWith(
+                      popupMenuTheme: PopupMenuThemeData(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          side: BorderSide(
+                              color: AIChatColors.whiteBorder10, width: 1),
+                        ),
+                        color: AIChatColors.surfaceDark,
+                        elevation: 8,
+                        textStyle:
+                            const TextStyle(color: AIChatColors.textWhite),
+                      ),
+                    ),
+                    child: PopupMenuButton<String>(
+                      offset: const Offset(0, 48),
+                      onSelected: (value) {
+                        if (value == 'clear_chat') {
+                          onMenuPressed?.call();
+                        }
+                      },
+                      icon: const Icon(Icons.more_vert, size: 24),
+                      color: AIChatColors.surfaceDark,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        side: BorderSide(
+                            color: AIChatColors.whiteBorder10, width: 1),
+                      ),
+                      style: IconButton.styleFrom(
+                        backgroundColor: AIChatColors.whiteHover5,
+                        foregroundColor:
+                            AIChatColors.textWhite.withOpacity(0.8),
+                      ),
+                      itemBuilder: (BuildContext context) => [
+                        PopupMenuItem<String>(
+                          value: 'clear_chat',
+                          height: 48,
+                          child: Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: AIChatColors.danger.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: const Icon(
+                                  Icons.delete_outline_rounded,
+                                  color: AIChatColors.danger,
+                                  size: 20,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              const Text(
+                                'Clear Chat',
+                                style: TextStyle(
+                                  color: AIChatColors.textWhite,
+                                  fontWeight: FontWeight.w500,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
