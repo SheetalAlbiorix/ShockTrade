@@ -17,6 +17,7 @@ import 'package:shock_app/features/alerts/presentation/pages/alerts_page.dart';
 import 'package:shock_app/features/account/presentation/pages/edit_profile_page.dart';
 import 'package:shock_app/features/portfolio/presentation/pages/add_holding_page.dart';
 import 'package:shock_app/features/portfolio/presentation/pages/edit_holding_page.dart';
+import 'package:shock_app/features/stocks/presentation/pages/market_indices_screen.dart';
 
 /// Application router configuration using GoRouter
 final appRouter = GoRouter(
@@ -126,6 +127,11 @@ final appRouter = GoRouter(
         final id = state.pathParameters['id']!;
         return EditHoldingPage(holdingId: id);
       },
+    ),
+    GoRoute(
+      path: '/market-indices',
+      name: 'market-indices',
+      builder: (context, state) => const MarketIndicesScreen(),
     ),
   ],
 );

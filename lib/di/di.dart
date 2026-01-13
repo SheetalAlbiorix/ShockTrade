@@ -2,11 +2,16 @@ import 'package:dio/dio.dart';
 import 'package:get_it/get_it.dart';
 import 'package:shock_app/core/networking/api_client.dart';
 import 'package:shock_app/features/auth/domain/repositories/auth_repository.dart';
+import 'package:shock_app/features/auth/domain/repositories/profile_repository.dart';
 import 'package:shock_app/features/auth/domain/usecases/login_usecase.dart';
 import 'package:shock_app/infrastructure/auth/auth_repository_impl.dart';
+import 'package:shock_app/infrastructure/auth/supabase_profile_repository.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:shock_app/core/networking/indian_api_client.dart';
 import 'package:shock_app/features/stock_detail/domain/stock_repository.dart';
 import 'package:shock_app/features/stock_detail/data/stock_repository_impl.dart';
+import 'package:shock_app/features/stocks/domain/repositories/market_repository.dart';
+import 'package:shock_app/features/stocks/data/repositories/market_repository_impl.dart';
 
 final getIt = GetIt.instance;
 
@@ -24,9 +29,17 @@ Future<void> configureDependencies() async {
     () => AuthRepositoryImpl(dio: getIt<Dio>()),
   );
 
+  getIt.registerLazySingleton<ProfileRepository>(
+    () => SupabaseProfileRepository(Supabase.instance.client),
+  );
+
   // Stock Feature
   getIt.registerLazySingleton<StockRepository>(
     () => StockRepositoryImpl(getIt<IndianApiClient>()),
+  );
+
+  getIt.registerLazySingleton<MarketRepository>(
+    () => MarketRepositoryImpl(getIt<IndianApiClient>()),
   );
 
   // Domain - Use Cases

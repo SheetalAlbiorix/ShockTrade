@@ -1,11 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:shock_app/core/config/app_colors.dart';
+import 'package:shock_app/features/stocks/domain/models/market_stock.dart';
+import 'package:shock_app/features/stocks/presentation/providers/indices_provider.dart';
 
-class MarketIndicesSection extends StatelessWidget {
+class MarketIndicesSection extends ConsumerWidget {
   const MarketIndicesSection({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final nseAsync = ref.watch(nseMostActiveProvider);
+    final bseAsync = ref.watch(bseMostActiveProvider);
+
     return Column(
       children: [
         Padding(
@@ -21,8 +28,8 @@ class MarketIndicesSection extends StatelessWidget {
                     ),
               ),
               TextButton(
-                onPressed: () {},
-                child: const Text(
+                onPressed: () => context.push('/market-indices'),
+                child: Text(
                   'View All',
                   style: TextStyle(color: AppColors.premiumAccentBlue),
                 ),
@@ -30,40 +37,83 @@ class MarketIndicesSection extends StatelessWidget {
             ],
           ),
         ),
-        const SizedBox(height: 8),
+        SizedBox(height: 8),
         SizedBox(
           height: 150,
-          child: ListView(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            scrollDirection: Axis.horizontal,
-            children: [
-              _buildIndexCard(
-                context,
-                name: 'NIFTY 50',
-                value: '19,435.00',
-                change: '+0.50%',
-                isPositive: true,
+          child: nseAsync.when(
+            data: (nseStocks) {
+              final bseStocks = bseAsync.value ?? [];
+              
+              // Combine or pick specific items for the home screen
+              // For demonstration, taking first 2 from NSE and first 1 from BSE
+              final displayList = [
+                ...nseStocks.take(2),
+                ...bseStocks.take(1),
+              ];
+
+              if (displayList.isEmpty) {
+                return Center(
+                  child: Text(
+                    'No data available',
+                    style: TextStyle(color: AppColors.darkTextSecondary),
+                  ),
+                );
+              }
+
+              return ListView.builder(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                scrollDirection: Axis.horizontal,
+                itemCount: displayList.length,
+                itemBuilder: (context, index) {
+                  final stock = displayList[index];
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 12),
+                    child: _buildIndexCard(
+                      context,
+                      name: stock.symbol,
+                      value: stock.lastPrice.toStringAsFixed(2),
+                      change: '${stock.pChange >= 0 ? '+' : ''}${stock.pChange.toStringAsFixed(2)}%',
+                      isPositive: stock.pChange >= 0,
+                    ),
+                  );
+                },
+              );
+            },
+            loading: () => ListView.builder(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              scrollDirection: Axis.horizontal,
+              itemCount: 3,
+              itemBuilder: (context, index) => Padding(
+                padding: const EdgeInsets.only(right: 12),
+                child: _buildShimmerCard(),
               ),
-              const SizedBox(width: 12),
-              _buildIndexCard(
-                context,
-                name: 'SENSEX',
-                value: '65,340.00',
-                change: '-0.20%',
-                isPositive: false,
+            ),
+            error: (err, stack) => Center(
+              child: Text(
+                'Error: ${err.toString()}',
+                style: TextStyle(color: AppColors.premiumAccentRed),
               ),
-              const SizedBox(width: 12),
-              _buildIndexCard(
-                context,
-                name: 'BANK NIFTY',
-                value: '44,500.20',
-                change: '+0.35%',
-                isPositive: true,
-              ),
-            ],
+            ),
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildShimmerCard() {
+    return Container(
+      width: 160,
+      decoration: BoxDecoration(
+        color: AppColors.premiumCardBackground.withOpacity(0.5),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.premiumCardBorder),
+      ),
+      child: Center(
+        child: CircularProgressIndicator(
+          strokeWidth: 2,
+          valueColor: AlwaysStoppedAnimation(AppColors.premiumAccentBlue),
+        ),
+      ),
     );
   }
 
@@ -76,11 +126,11 @@ class MarketIndicesSection extends StatelessWidget {
   }) {
     return Container(
       width: 160,
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0), // Bottom padding handled by chart
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.premiumCardBackground,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.premiumCardBorder),
+        border: Border.all(color: AppColors.premiumCardBorder.withOpacity(0.5)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -100,17 +150,22 @@ class MarketIndicesSection extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-              const SizedBox(width: 4),
+              SizedBox(width: 4),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
-                  color: (isPositive ? AppColors.premiumAccentGreen : AppColors.premiumAccentRed).withOpacity(0.1),
+                  color: (isPositive
+                          ? AppColors.premiumAccentGreen
+                          : AppColors.premiumAccentRed)
+                      .withOpacity(0.1),
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Text(
                   change,
                   style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        color: isPositive ? AppColors.premiumAccentGreen : AppColors.premiumAccentRed,
+                        color: isPositive
+                            ? AppColors.premiumAccentGreen
+                            : AppColors.premiumAccentRed,
                         fontWeight: FontWeight.bold,
                         fontSize: 10,
                       ),
@@ -118,20 +173,21 @@ class MarketIndicesSection extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           Text(
-            value,
+            '₹$value',
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
                   color: AppColors.darkTextPrimary,
                   fontWeight: FontWeight.bold,
+                  fontSize: 18,
                 ),
           ),
-          const Spacer(),
+          Spacer(),
           // Chart placeholder
           SizedBox(
-            height: 50,
+            height: 44,
+            width: double.infinity,
             child: CustomPaint(
-              size: const Size(double.infinity, 50),
               painter: _IndexChartPainter(isPositive: isPositive),
             ),
           ),
@@ -155,15 +211,18 @@ class _IndexChartPainter extends CustomPainter {
 
     final path = Path();
     
-    // Draw from bottom left to top right (approx)
+    final verticalPadding = size.height * 0.15;
+    final contentHeight = size.height - (verticalPadding * 2);
+    
+    // Draw sparkline with padding
     if (isPositive) {
-       path.moveTo(0, size.height);
-       path.quadraticBezierTo(size.width * 0.3, size.height, size.width * 0.5, size.height * 0.6);
-       path.quadraticBezierTo(size.width * 0.7, size.height * 0.3, size.width, size.height * 0.2);
+       path.moveTo(0, size.height - verticalPadding);
+       path.quadraticBezierTo(size.width * 0.3, size.height - verticalPadding, size.width * 0.5, verticalPadding + contentHeight * 0.4);
+       path.quadraticBezierTo(size.width * 0.7, verticalPadding + contentHeight * 0.1, size.width, verticalPadding);
     } else {
-       path.moveTo(0, size.height * 0.4);
-       path.quadraticBezierTo(size.width * 0.3, size.height * 0.4, size.width * 0.5, size.height * 0.7);
-       path.quadraticBezierTo(size.width * 0.7, size.height, size.width, size.height * 0.9);
+       path.moveTo(0, verticalPadding + contentHeight * 0.3);
+       path.quadraticBezierTo(size.width * 0.3, verticalPadding + contentHeight * 0.3, size.width * 0.5, verticalPadding + contentHeight * 0.7);
+       path.quadraticBezierTo(size.width * 0.7, size.height - verticalPadding, size.width, size.height - verticalPadding);
     }
 
     canvas.drawPath(path, paint);
